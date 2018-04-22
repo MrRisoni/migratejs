@@ -1,0 +1,24 @@
+{
+  "name": "migratejs",
+  "version": "1.0.0",
+  "description": "Simple migration tool",
+  "main": "index.js",
+  "repository": "https://github.com/MrRisoni/migratejs.git",
+  "author": "phoenix <vanguelisk@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "mysql2": "^1.5.3"
+  },
+  "devDependencies": {
+    "webpack": "^4.6.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-es2016": "^6.24.1",
+    "babel-register": "^6.26.0"
+  }
+}
