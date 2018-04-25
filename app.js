@@ -7,6 +7,8 @@ console.log(moment().format('YYYYMMDD_hhmmss'));
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
+import Migrator from './Migrator';
+const migr = new Migrator('./db_config.yml');
 
 
 if ( process.argv[2] == 'new') {
@@ -31,6 +33,6 @@ else if ( process.argv[2] == 'migrate')
 {
     // read the most recent migration
 
-    let mg = new migration20180422_083815authors();
+    let mg = new migration20180422_083815authors(migr);
     mg.schemaUp();
 }

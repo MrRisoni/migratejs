@@ -1,0 +1,6 @@
+---
+development:
+  db: foradb_dev
+  host: localhost
+  pass:
+  user: root
