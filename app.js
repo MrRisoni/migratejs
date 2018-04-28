@@ -1,5 +1,7 @@
-const moment = require('moment');
-const fs = require('fs');
+import moment from 'moment';
+import fs from 'fs';
+import os from 'os';
+
 import  migration20180422_083815authors from './migrations/migration20180422_083815authors';
 
 
@@ -11,12 +13,12 @@ import Migrator from './Migrator';
 const migr = new Migrator('./db_config.yml');
 
 
-if ( process.argv[2] == 'new') {
+if ( process.argv[2] === 'new') {
     // make migration file
     const className = 'migration' + stamp + process.argv[3];
-    let strFile = " export default class  " + className + " { \n";
-    strFile += "  schemaUp() {}; \n";
-    strFile += "  schemaDown() {}; \n";
+    let strFile = " export default class  " + className + " { "  + os.EOL;
+    strFile += "  schemaUp() {}; " + os.EOL;
+    strFile += "  schemaDown() {}; " + os.EOL;
     strFile += " }; ";
 
 
@@ -29,7 +31,7 @@ if ( process.argv[2] == 'new') {
     });
 
 }
-else if ( process.argv[2] == 'migrate')
+else if ( process.argv[2] === 'migrate')
 {
     // read the most recent migration
 

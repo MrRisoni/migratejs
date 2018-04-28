@@ -28,7 +28,7 @@ export default class Migrator {
 
     run(query)
     {
-        console.log('Running query...');
+        console.log(query);
         this.connection.query(
             query,
             function(err, results, fields) {

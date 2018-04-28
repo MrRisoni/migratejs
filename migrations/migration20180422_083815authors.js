@@ -15,6 +15,7 @@ export default class migration20180422_083815authors {
         let tbl = new TableUtils('users',this.db);
         tbl.addColumn( new Column('email').setType('VARCHAR').setLen(255).isNotNull())
            .addColumn( new Column('id').setType('INT').setLen(11).setPrimary())
+           .addIndex({ type: 'UNIQUE', columns :['email']})
            .create();
     };
 
