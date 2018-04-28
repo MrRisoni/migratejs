@@ -22,6 +22,12 @@ export default class Column {
 
     }
 
+    setUnsigned()
+    {
+        this.unSigned = true;
+        return this;
+
+    }
     setPrimary()
     {
         this.isNull  = false;

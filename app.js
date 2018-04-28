@@ -13,7 +13,7 @@ if ( process.argv[2] === 'new') {
     const className = 'migration' + stamp + process.argv[3];
 
     let lineFiles = [];
-    lineFiles.push(" import TableUtils from '../TableUtils'); ");
+    lineFiles.push(" import TableUtils from '../TableUtils'; ");
     lineFiles.push(" import Column from '../Column'; ");
     lineFiles.push( " module.exports = " + os.EOL + " class  " + className + " { ");
     lineFiles.push("  ");
@@ -46,7 +46,10 @@ else if ( process.argv[2] === 'migrate')
     migr.MigrationModel.findAll({
         where: {
             processed : 0
-        }
+        },
+        order:[
+            ['created_at', 'ASC']
+        ]
     }).then(results => {
         results.forEach( res => {
 
