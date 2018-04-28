@@ -30,13 +30,14 @@ Adding extra column
 
 
 
-Renaming column
+Renaming column and adding column
 
 ```javascript
   schemaUp() {
-            let tbl = new TableUtils('users',this.db);
-            tbl.renameColumn( { from :'pass', to:'password'})
-                .alter();
+           let tbl = new TableUtils('users',this.db);
+           tbl.renameColumn( { from :'pass', to:'password'})
+               .addColumn( new Column('us_surname').setType('VARCHAR').setLen(255).isNotNull())
+               .alter();
         };
 ```
 
