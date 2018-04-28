@@ -2,7 +2,8 @@ import TableUtils from '../TableUtils';
 import Column from '../Column';
 
 
-export default class migration20180422_083815authors {
+module.exports =
+class migration20180422_083815authors {
 
     constructor(db)
     {

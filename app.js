@@ -2,8 +2,6 @@ import moment from 'moment';
 import fs from 'fs';
 import os from 'os';
 
-import  migration20180422_083815authors from './migrations/migration20180422_083815authors';
-
 
 console.log(moment().format('YYYYMMDD_hhmmss'));
 
@@ -16,7 +14,7 @@ const migr = new Migrator('./db_config.yml');
 if ( process.argv[2] === 'new') {
     // make migration file
     const className = 'migration' + stamp + process.argv[3];
-    let strFile = " export default class  " + className + " { "  + os.EOL;
+    let strFile = " module.exports = " + os.EOL + " class  " + className + " { "  + os.EOL;
     strFile += "  schemaUp() {}; " + os.EOL;
     strFile += "  schemaDown() {}; " + os.EOL;
     strFile += " }; ";
@@ -30,11 +28,28 @@ if ( process.argv[2] === 'new') {
         console.log("The file was saved!");
     });
 
+    migr.insert(className);
+
 }
 else if ( process.argv[2] === 'migrate')
 {
     // read the most recent migration
+    migr.MigrationModel.findAll({
+        where: {
+            processed : 0
+        }
+    }).then(results => {
+        results.forEach( res => {
 
-    let mg = new migration20180422_083815authors(migr);
-    mg.schemaUp();
+         //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
+            const migrationClass = require(`./migrations/${res.fileName}.js`);
+
+            let mg = new migrationClass(migr);
+          //  let mg = new migrationClass(migr);
+            console.log('Executing migration ... ' + res.fileName);
+
+            mg.schemaUp();
+        } );
+    })
+
 }

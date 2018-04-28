@@ -1,24 +1,64 @@
 import yaml from 'js-yaml';
 import fs from 'fs';
 import  mysql from 'mysql2';
-
+import Sequelize from 'sequelize';
 
 export default class Migrator {
 
     constructor(ymlConfig)
     {
         this.dbg =true;
+        this.connection = null;
+        this.MigrationModel  =null;
 
         try {
             const settings = yaml.safeLoad(fs.readFileSync(ymlConfig, 'utf8'));
-            console.log(settings);
 
-            this.connection = mysql.createConnection({
+            this.connection = new Sequelize(settings.development.db, settings.development.user, '', {
                 host: settings.development.host,
-                user: settings.development.user,
-                password: '',
-                database: settings.development.db,
+                dialect: 'mysql',
+                pool: {
+                    max: 5,
+                    min: 0,
+                    acquire: 30000,
+                    idle: 10000
+                },
+                logging:true
             });
+
+
+            this.connection
+                .authenticate()
+                .then(() => {
+                    console.log('Connection has been established successfully.');
+                })
+                .catch(err => {
+                    console.error('Unable to connect to the database:', err);
+                });
+
+
+            this.MigrationModel = this.connection.define('migrations', {
+                    id: {
+                        type: Sequelize.INTEGER.UNSIGNED,
+                        field: 'id',
+                        autoIncrement: true,
+                        primaryKey: true,
+                    },
+                    fileName: {
+                        type: Sequelize.CHAR,
+                        field: 'file_name'
+                    },
+                    processes: {
+                        type: Sequelize.INTEGER.UNSIGNED,
+                        field: 'processed'
+                    }
+                },
+                {
+                    timestamps: false,
+                    freezeTableName: true
+                }
+            );
+
 
 
         } catch (e) {
@@ -26,16 +66,24 @@ export default class Migrator {
         }
     }
 
+    insert(fileName)
+    {
+        const query = " INSERT INTO `migrations` (`file_name`) VALUES ('" + fileName +"')";
+        this.connection.query(query).then(myTableRows => {});
+
+    }
+
+    getPendingMigrations()
+    {
+      return this.connection.query("SELECT file_name FROM migrations WHERE processed =0 ORDER BY created_at ASC");
+    }
+
+
     run(query)
     {
         console.log(query);
-        this.connection.query(
-            query,
-            function(err, results, fields) {
-                console.log(err);
-                process.exit();
-            }
-        );
+        this.connection.query(query).then(myTableRows => {});
+
     }
 
 
