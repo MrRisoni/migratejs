@@ -10,6 +10,11 @@ module.exports =
         }
 
         schemaUp() {
+
+            let tbl = new TableUtils('users',this.db);
+            tbl.addColumn( new Column('password').setType('VARCHAR').setLen(600).isNotNull())
+                .alter();
+
         };
 
         schemaDown() {
