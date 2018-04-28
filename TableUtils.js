@@ -39,24 +39,16 @@ export default class TableUtils
         let columnsSQL = [];
         console.log(this.columns);
 
-       /* this.columns.forEach( col => {
+        this.columns.forEach( col => {
             columnsSQL.push ( ' ADD COLUMN ' + col.getSQL());
         });
 
-       // this.db.run(this.alterSQL + columnsSQL.join(','));
+        this.db.run(this.alterSQL + columnsSQL.join(','));
 
-*/
         // chain promises !!!
         this.getRenaming().then(result => {
-            console.log('Promise renaming result ' + result.SQL);
             this.db.run(this.alterSQL + result.SQL.join(','));
-
         });
-
-
-
-        //process.exit();
-
 
     }
 
