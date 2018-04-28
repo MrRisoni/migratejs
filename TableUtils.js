@@ -19,7 +19,24 @@ export default class TableUtils
 
     create()
     {
-        this.createSQL = " CREATE TABLE " + this.name  + " ( " +  this.columns.join(',') +  " ) ";
+        let columnsSQL = [];
+
+        console.log(this.columns);
+
+        this.columns.forEach( col => {
+                columnsSQL.push ( col.getSQL());
+        });
+
+        this.createSQL = ' CREATE TABLE ' + this.name  + ' ( ' +  columnsSQL.join(',') ;
+        this.columns.forEach( col => {
+           if (col.isPrimary === true) {
+                this.createSQL +=  ' , PRIMARY KEY (' + col.name +') ';
+
+           }
+
+        });
+
+        this.createSQL +=  ' ) ';
         console.log(this.createSQL);
 
         this.db.run(this.createSQL);

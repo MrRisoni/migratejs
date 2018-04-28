@@ -33,6 +33,7 @@ export default class Migrator {
             query,
             function(err, results, fields) {
                 console.log(err);
+                process.exit();
             }
         );
     }
