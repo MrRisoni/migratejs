@@ -1,23 +1,32 @@
 import moment from 'moment';
 import fs from 'fs';
 import os from 'os';
+import Migrator from './Migrator';
 
-
-console.log(moment().format('YYYYMMDD_hhmmss'));
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
-import Migrator from './Migrator';
 const migr = new Migrator('./db_config.yml');
-
 
 if ( process.argv[2] === 'new') {
     // make migration file
     const className = 'migration' + stamp + process.argv[3];
-    let strFile = " module.exports = " + os.EOL + " class  " + className + " { "  + os.EOL;
-    strFile += "  schemaUp() {}; " + os.EOL;
-    strFile += "  schemaDown() {}; " + os.EOL;
-    strFile += " }; ";
+
+    let lineFiles = [];
+    lineFiles.push(" import TableUtils from '../TableUtils'); ");
+    lineFiles.push(" import Column from '../Column'; ");
+    lineFiles.push( " module.exports = " + os.EOL + " class  " + className + " { ");
+    lineFiles.push("  ");
+    lineFiles.push("  ");
+    lineFiles.push(" constructor(db) ");
+    lineFiles.push(" { ");
+    lineFiles.push(" \tthis.db =db; ");
+    lineFiles.push(" } ");
+    lineFiles.push(" schemaUp() {}; ");
+    lineFiles.push(" schemaDown() {}; ");
+    lineFiles.push("};  ");
+
+    const strFile = lineFiles.join(os.EOL);
 
 
     fs.writeFile("migrations/" + className + ".js", strFile, function(err) {
@@ -45,10 +54,12 @@ else if ( process.argv[2] === 'migrate')
             const migrationClass = require(`./migrations/${res.fileName}.js`);
 
             let mg = new migrationClass(migr);
-          //  let mg = new migrationClass(migr);
             console.log('Executing migration ... ' + res.fileName);
-
             mg.schemaUp();
+
+            migr.update(res.fileName);
+
+
         } );
     })
 

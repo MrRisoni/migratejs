@@ -78,6 +78,11 @@ export default class Migrator {
       return this.connection.query("SELECT file_name FROM migrations WHERE processed =0 ORDER BY created_at ASC");
     }
 
+    update(migrationFile)
+    {
+        this.connection.query("UPDATE migrations SET processed = 1, " +
+            " updated_at = NOW() WHERE file_name = '" + migrationFile + "' ").spread((results, metadata) => {});
+     }
 
     run(query)
     {
