@@ -22,9 +22,21 @@ Adding extra column
   schemaUp() {
 
             let tbl = new TableUtils('users',this.db);
-            tbl.addColumn( new Column('password').setType('VARCHAR').setLen(600).isNotNull())
+            tbl.addColumn( new Column('pass').setType('VARCHAR').setLen(600).isNotNull())
                 .alter();
 
+        };
+```
+
+
+
+Renaming column
+
+```javascript
+  schemaUp() {
+            let tbl = new TableUtils('users',this.db);
+            tbl.renameColumn( { from :'pass', to:'password'})
+                .alter();
         };
 ```
 
@@ -41,3 +53,5 @@ UNIQUE index on multiple columns
                 .create();
         };
 ```
+
+

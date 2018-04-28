@@ -2,7 +2,7 @@ import TableUtils from '../TableUtils';
 import Column from '../Column';
 
 module.exports =
-    class migration20180428_122435add_name_to_users {
+    class migration20180428_060946rename_pass_to_password {
 
 
         constructor(db) {
@@ -10,9 +10,8 @@ module.exports =
         }
 
         schemaUp() {
-
             let tbl = new TableUtils('users',this.db);
-            tbl.addColumn( new Column('password').setType('VARCHAR').setLen(600).isNotNull())
+            tbl.renameColumn( { from :'pass', to:'password'})
                 .alter();
 
         };

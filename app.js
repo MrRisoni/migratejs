@@ -60,7 +60,7 @@ else if ( process.argv[2] === 'migrate')
             console.log('Executing migration ... ' + res.fileName);
             mg.schemaUp();
 
-            migr.update(res.fileName);
+           //  migr.update(res.fileName);
 
 
         } );

@@ -91,5 +91,10 @@ export default class Migrator {
 
     }
 
+    execute(query)
+    {
+        return  this.connection.query(query, {type: this.connection.QueryTypes.SELECT});
+    }
+
 
 }

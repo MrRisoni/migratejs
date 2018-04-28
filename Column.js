@@ -22,6 +22,8 @@ export default class Column {
 
     }
 
+
+
     setUnsigned()
     {
         this.unSigned = true;
@@ -46,6 +48,8 @@ export default class Column {
         }
         return this;
     }
+
+
 
     setCollation(encoding)
     {

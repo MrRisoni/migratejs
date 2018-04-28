@@ -7,8 +7,9 @@ export default class TableUtils
         this.name = name;
         this.columns = [];
         this.createSQL = "";
+        this.alterSQL = '';
         this.db =db;
-
+        this.renames = [];
         this.indices = [];
 
     }
@@ -24,6 +25,57 @@ export default class TableUtils
         this.indices.push(idx);
         return this;
 
+    }
+
+    renameColumn(colData)
+    {
+      this.renames.push(colData);
+      return this;
+    }
+
+    alter()
+    {
+        this.alterSQL = 'ALTER TABLE ' + this.name;
+        let columnsSQL = [];
+        console.log(this.columns);
+
+       /* this.columns.forEach( col => {
+            columnsSQL.push ( ' ADD COLUMN ' + col.getSQL());
+        });
+
+       // this.db.run(this.alterSQL + columnsSQL.join(','));
+
+*/
+        // chain promises !!!
+        this.getRenaming().then(result => {
+            console.log('Promise renaming result ' + result.SQL);
+            this.db.run(this.alterSQL + result.SQL.join(','));
+
+        });
+
+
+
+        //process.exit();
+
+
+    }
+
+    getRenaming()
+    {
+        let renameSQL = [];
+
+        return new Promise((resolve,reject ) => {
+            this.db.execute("SHOW COLUMNS FROM " + this.name).then(colsSchema => {
+                colsSchema.forEach(colSchema => {
+                    this.renames.forEach(colData => {
+                        if (colData.from === colSchema.Field) {
+                            renameSQL.push(' CHANGE ' + colData.from + ' ' + colData.to + ' ' + colSchema.Type );
+                        }
+                    });
+                });
+                resolve( { SQL: renameSQL});
+            });
+        });
     }
 
     create()
@@ -49,6 +101,12 @@ export default class TableUtils
         this.db.run(this.createSQL);
 
         // indices
+        this.addIndices();
+
+    }
+
+    addIndices()
+    {
 
         this.indices.forEach( idx => {
             const idxName = idx.type + '_' + idx.columns.join('_');
