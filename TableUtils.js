@@ -56,7 +56,7 @@ export default class TableUtils
     {
         let renameSQL = [];
 
-        return new Promise((resolve,reject ) => {
+        return new Promise((resolve, reject ) => {
             this.db.execute("SHOW COLUMNS FROM " + this.name).then(colsSchema => {
                 colsSchema.forEach(colSchema => {
                     this.renames.forEach(colData => {
@@ -72,28 +72,39 @@ export default class TableUtils
 
     create()
     {
-        let columnsSQL = [];
+        return new Promise((resolve, reject) => {
 
-        console.log(this.columns);
 
-        this.columns.forEach( col => {
-                columnsSQL.push ( col.getSQL());
+            let columnsSQL = [];
+
+            this.columns.forEach(col => {
+                columnsSQL.push(col.getSQL());
+            });
+
+            this.createSQL = ' CREATE TABLE ' + this.name + ' ( ' + columnsSQL.join(',');
+            this.columns.forEach(col => {
+                if (col.isPrimary === true) {
+                    this.createSQL += ' , PRIMARY KEY (' + col.name + ') ';
+
+                }
+
+            });
+
+            this.createSQL += ' ) ';
+
+            this.db.execute(this.createSQL).then(exres => {
+                console.log('SQL Executed OK!');
+                resolve({proceed: true});
+            }).catch(err => {
+                console.log('SQL Executed ERROR! '  + JSON.stringify(err));
+
+                reject({proceed: false});
+            });
+
+
+            // indices
+            //  this.addIndices();
         });
-
-        this.createSQL = ' CREATE TABLE ' + this.name  + ' ( ' +  columnsSQL.join(',') ;
-        this.columns.forEach( col => {
-           if (col.isPrimary === true) {
-                this.createSQL +=  ' , PRIMARY KEY (' + col.name +') ';
-
-           }
-
-        });
-
-        this.createSQL +=  ' ) ';
-        this.db.run(this.createSQL);
-
-        // indices
-        this.addIndices();
 
     }
 
@@ -106,7 +117,7 @@ export default class TableUtils
             let indexSQL = ' CREATE ' + idx.type +' INDEX ' + idxName.toLowerCase()
                 + ' ON ' + this.name + '('+ idx.columns.join(',') +')';
 
-            this.db.run(indexSQL);
+            this.db.execute(indexSQL);
 
         });
     }

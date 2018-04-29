@@ -8,6 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.5.1",
+    "js-beautify": "^1.7.5",
     "js-yaml": "^3.11.0",
     "moment": "^2.22.1",
     "mysql2": "^1.5.3",

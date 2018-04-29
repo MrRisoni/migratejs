@@ -1,14 +1,18 @@
-A ridiculous attempt
-to make an migration tool
+import TableUtils from '../TableUtils';
+import Column from '../Column';
 
-Example
+module.exports =
+    class migration20180429_090140authors {
 
-Create table
 
-```javascript
-  schemaUp() {
+        constructor(db) {
+            this.db = db;
+        }
+
+        schemaUp() {
 
             return new Promise((resolve, reject) => {
+
 
                 let tbl = new TableUtils('authors', this.db);
                 tbl.addColumn(new Column('id').setType('INT').setLen(11).setPrimary())
@@ -23,5 +27,8 @@ Create table
             });
 
         };
-```
 
+        schemaDown() {
+        };
+
+    };
