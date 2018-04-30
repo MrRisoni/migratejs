@@ -1,5 +1,5 @@
 A ridiculous attempt
-to make an migration tool
+to make an migration tool (Inspiration Laravel)
 
 Example
 

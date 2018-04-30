@@ -94,16 +94,27 @@ export default class TableUtils
 
             this.db.execute(this.createSQL).then(exres => {
                 console.log('SQL Executed OK!');
+
+
                 resolve({proceed: true});
             }).catch(err => {
                 console.log('SQL Executed ERROR! '  + JSON.stringify(err));
 
                 reject({proceed: false});
-            });
+            })
 
 
             // indices
             //  this.addIndices();
+            this.indices.forEach( idx => {
+                const idxName = idx.type + '_' + idx.columns.join('_');
+
+                let indexSQL = ' CREATE ' + idx.type +' INDEX ' + idxName.toLowerCase()
+                    + ' ON ' + this.name + '('+ idx.columns.join(',') +')';
+
+                this.db.run(indexSQL);
+
+            });
         });
 
     }
