@@ -92,16 +92,20 @@ export default class TableUtils
 
             this.createSQL += ' ) ';
 
-            this.db.execute(this.createSQL).then(exres => {
+           /* this.db.execute(this.createSQL).then(exres => {
                 console.log('SQL Executed OK!');
 
+                // Promise array for indices !!!
 
                 resolve({proceed: true});
             }).catch(err => {
                 console.log('SQL Executed ERROR! '  + JSON.stringify(err));
 
                 reject({proceed: false});
-            })
+            });
+            */
+
+            let PromiseArray = [this.db.execute(this.createSQL)];
 
 
             // indices
@@ -112,8 +116,14 @@ export default class TableUtils
                 let indexSQL = ' CREATE ' + idx.type +' INDEX ' + idxName.toLowerCase()
                     + ' ON ' + this.name + '('+ idx.columns.join(',') +')';
 
-                this.db.run(indexSQL);
+              //  this.db.run(indexSQL);
+                PromiseArray.push(this.db.execute(indexSQL))
 
+            });
+
+            console.log('Executing Promise Array');
+            Promise.all(PromiseArray).then(function(values) {
+                console.log(values);
             });
         });
 

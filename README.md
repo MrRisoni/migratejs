@@ -18,10 +18,11 @@ Create table
                         resolve({schemaUp: true});
                     }).catch(err => {
                         console.log('Shema Up NOT OK ' + JSON.stringify(err));
-                        resolve({schemaUp: false})
+                        reject({schemaUp: false})
                     });
             });
 
         };
 ```
 
+Create table and add index

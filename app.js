@@ -3,13 +3,15 @@ import fs from 'fs';
 import os from 'os';
 import beautify from 'js-beautify'
 import Migrator from './Migrator';
+import TableUtils from "./TableUtils";
 
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
 const migr = new Migrator('./db_config.yml');
 
-if (process.argv[2] === 'new') {
+
+if (process.argv[2] === 'newtable') { // new or newtable
     // make migration file
     const className = 'migration' + stamp + process.argv[3];
 
@@ -23,7 +25,20 @@ if (process.argv[2] === 'new') {
     lineFiles.push(" { ");
     lineFiles.push(" \tthis.db =db; ");
     lineFiles.push(" } ");
-    lineFiles.push(" schemaUp() {}; ");
+    lineFiles.push(" schemaUp() { ");
+    lineFiles.push("");
+    lineFiles.push("return new Promise((resolve, reject) => {");
+    lineFiles.push("\tlet tbl = new TableUtils('" + process.argv[3] + "', this.db);");
+    lineFiles.push("create().then(res => {");
+    lineFiles.push(" console.log('Schema Up Ok');");
+    lineFiles.push(" resolve({schemaUp: true}); ");
+    lineFiles.push(" }).catch(err => { ");
+    lineFiles.push("  console.log('Schema Up NOT OK ' + JSON.stringify(err)); ");
+    lineFiles.push(" reject({schemaUp: false}) ");
+    lineFiles.push("  }); ");
+    lineFiles.push("  });");
+    lineFiles.push("}; ");
+
     lineFiles.push(" schemaDown() {}; ");
     lineFiles.push("};  ");
 
