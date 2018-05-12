@@ -14,7 +14,8 @@
     "sequelize": "^4.37.6"
   },
   "scripts": {
-    "migrate": "babel-node app.js migrate"
+    "migrate": "babel-node app.js migrate",
+    "seed": "babel-node app.js seed"
   },
   "devDependencies": {
     "@babel/node": "^7.0.0-beta.46",

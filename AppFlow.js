@@ -117,6 +117,41 @@ export default class AppFlow{
             });
         });
     }
+
+
+
+    executeSeeds()
+    {
+        const self = this;
+
+        this.migr.SeederModel.findAll({
+            where: {
+                processed: 0
+            },
+            order: [
+                ['created_at', 'ASC']
+            ]
+        }).then(results => {
+            if (results.length >0) {
+                results.forEach(res => {
+
+                    const seedClass = require(`./seeds/${res.fileName}.js`);
+
+                    let sd = new seedClass(self.migr);
+                    console.log('Executing seed ... ' + res.fileName);
+
+                    sd.dataFeed().then(result => {
+                        self.migr.update(res.fileName);
+                    });
+
+
+                });
+            }
+            else {
+                console.log('Nothing to migrate');
+            }
+        });
+    }
 }
 
 
