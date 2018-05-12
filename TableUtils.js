@@ -81,6 +81,7 @@ export default class TableUtils
                 columnsSQL.push(col.getSQL());
             });
 
+
             this.createSQL = ' CREATE TABLE ' + this.name + ' ( ' + columnsSQL.join(',');
             this.columns.forEach(col => {
                 if (col.isPrimary === true) {
@@ -92,30 +93,32 @@ export default class TableUtils
 
             this.createSQL += ' ) ';
 
+            console.log(this.createSQL);
+
 
             let PromiseArray = [this.db.execute(this.createSQL)];
 
 
             // indices
             //  this.addIndices();
-            this.indices.forEach( idx => {
+            this.indices.forEach(idx => {
                 const idxName = idx.type + '_' + idx.columns.join('_');
 
-                let indexSQL = ' CREATE ' + idx.type +' INDEX ' + idxName.toLowerCase()
-                    + ' ON ' + this.name + '('+ idx.columns.join(',') +')';
+                let indexSQL = ' CREATE ' + idx.type + ' INDEX ' + idxName.toLowerCase()
+                    + ' ON ' + this.name + '(' + idx.columns.join(',') + ')';
 
-              //  this.db.run(indexSQL);
                 PromiseArray.push(this.db.execute(indexSQL))
-
             });
 
             console.log('Executing Promise Array');
             Promise.all(PromiseArray).then(values => {
                 console.log(values);
-                resolve({success:true});
+                resolve({success: true});
             }).catch(err => {
-                reject({success:false});
+                reject({success: false});
             });
+
+
         });
 
     }

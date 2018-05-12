@@ -33,37 +33,7 @@ else if (process.argv[2] === 'newtable') { // new or newtable
     app_flow.newMigration(process.argv[3])
 }
 else if (process.argv[2] === 'migrate') {
-    // read the most recent migration
-    migr.MigrationModel.findAll({
-        where: {
-            processed: 0
-        },
-        order: [
-            ['created_at', 'ASC']
-        ]
-    }).then(results => {
-        if (results.length >0) {
-            results.forEach(res => {
-
-                //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
-                const migrationClass = require(`./migrations/${res.fileName}.js`);
-
-                let mg = new migrationClass(migr);
-                console.log('Executing migration ... ' + res.fileName);
-
-                mg.schemaUp().then(result => {
-                    console.log('Migration result ' + result);
-                    migr.update(res.fileName);
-                });
-
-
-            });
-        }
-        else {
-            console.log('Nothing to migrate');
-        }
-    });
-
+    app_flow.executeMigrations();
 }
 else if (process.argv[2] === 'seed') {
     app_flow.executeSeeds();

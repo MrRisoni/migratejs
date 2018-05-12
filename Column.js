@@ -1,7 +1,7 @@
 export default class Column {
 
 
-    constructor(name)
+    constructor(name, options)
     {
         this.name = name;
         this.type = '';
@@ -12,14 +12,34 @@ export default class Column {
         this.isNull = true;
         this.unSigned = false;
         this.isNumeric = false;
+        this.options = options;
         return this;
     }
 
-    isNotNull()
+    parseOptions()
     {
-        this.isNull = false;
-        return this;
+        console.log(this.options);
+        this.options.forEach(opt => {
+            console.log(opt);
 
+            for (const [key, value] of Object.entries(opt)) {
+                if (key == 'type') {
+                    this.setType(value);
+                }
+                if (key == 'primary') {
+                    this.setPrimary();
+                }
+                if (key == 'null') {
+                    this.setIsNull(value);
+                }
+            }
+        });
+    }
+
+
+    setIsNull(val)
+    {
+        this.isNull = val;
     }
 
 
@@ -27,17 +47,13 @@ export default class Column {
     setUnsigned()
     {
         this.unSigned = true;
-        return this;
-
     }
+
     setPrimary()
     {
         this.isNull  = false;
         this.isPrimary = true;
-        if (this.isNumeric) {
-            this.unSigned = true;
-        }
-        return this;
+
     }
 
     setType(type)
@@ -46,7 +62,6 @@ export default class Column {
         if (this.type.indexOf('INT') > -1) {
             this.isNumeric = true;
         }
-        return this;
     }
 
 
@@ -54,16 +69,16 @@ export default class Column {
     setCollation(encoding)
     {
         this.collation = encoding;
-        return this;
     }
 
     setLen(len) {
         this.len = len;
-        return this;
     }
 
     getSQL()
     {
+        this.parseOptions();
+
         let  sql = this.name + ' ' + this.type + '(' + this.len+ ')';
 
         if (this.type === 'VARCHAR') {

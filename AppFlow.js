@@ -119,6 +119,42 @@ export default class AppFlow{
     }
 
 
+    executeMigrations()
+    {
+        const self = this;
+
+        this.migr.MigrationModel.findAll({
+            where: {
+                processed: 0
+            },
+            order: [
+                ['created_at', 'ASC']
+            ]
+        }).then(results => {
+            if (results.length >0) {
+                results.forEach(res => {
+
+                    //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
+                    const migrationClass = require(`./migrations/${res.fileName}.js`);
+
+                    let mg = new migrationClass(self.migr);
+                    console.log('Executing migration ... ' + res.fileName);
+
+                    mg.schemaUp().then(result => {
+                        console.log('Migration result ' + result);
+                        self.migr.update(res.fileName);
+                    });
+
+
+                });
+            }
+            else {
+                console.log('Nothing to migrate');
+            }
+        });
+
+    }
+
 
     executeSeeds()
     {
