@@ -19,53 +19,12 @@ if ( process.argv.length ===4) {
 console.log(chosenDb);
 migr.setUpDB(chosenDb);
 
-if (process.argv[2] === 'newseed') {
+if (process.argv[2] === 'newtable') { // new or newtable
     // make migration file
     const className = 'seed' + stamp + process.argv[3];
 
     let lineFiles = [];
     lineFiles.push(" import TableUtils from '../TableUtils'; ");
-    lineFiles.push(" module.exports = " + os.EOL + " class  " + className + " { ");
-    lineFiles.push("  ");
-    lineFiles.push("  ");
-    lineFiles.push(" constructor(db) ");
-    lineFiles.push(" { ");
-    lineFiles.push(" \tthis.db =db; ");
-    lineFiles.push(" } ");
-    lineFiles.push(" dataFeed() { ");
-    lineFiles.push("");
-    lineFiles.push("return new Promise((resolve, reject) => {");
-    lineFiles.push("\tlet tbl = new TableUtils('" + process.argv[3] + "', this.db);");
-    lineFiles.push("create().then(res => {");
-    lineFiles.push(" console.log('Data Inserted Ok');");
-    lineFiles.push(" resolve({dataFeeded: true}); ");
-    lineFiles.push(" }).catch(err => { ");
-    lineFiles.push("  console.log('data Feed NOT OK ' + JSON.stringify(err)); ");
-    lineFiles.push(" reject({dataFeeded: false}) ");
-    lineFiles.push("  }); ");
-    lineFiles.push("  });");
-    lineFiles.push("}; ");
-
-    const strFile = lineFiles.join(os.EOL);
-    const beautyString = beautify(strFile, { indent_size: 4 });
-
-    fs.writeFile("seeds/" + className + ".js", beautyString, function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        migr.insert(className);
-        console.log("The file was saved!");
-        process.exit();
-    });
-
-}
-else if (process.argv[2] === 'newtable') { // new or newtable
-    // make migration file
-    const className = 'migration' + stamp + process.argv[3];
-
-    let lineFiles = [];
-    lineFiles.push(" import TableUtils from '../TableUtils'; ");
-    lineFiles.push(" import Column from '../Column'; ");
     lineFiles.push(" module.exports = " + os.EOL + " class  " + className + " { ");
     lineFiles.push("  ");
     lineFiles.push("  ");
@@ -86,9 +45,9 @@ else if (process.argv[2] === 'newtable') { // new or newtable
     lineFiles.push("  }); ");
     lineFiles.push("  });");
     lineFiles.push("}; ");
+    lineFiles.push("}; ");
 
-    lineFiles.push(" schemaDown() {}; ");
-    lineFiles.push("};  ");
+
 
     const strFile = lineFiles.join(os.EOL);
     const beautyString = beautify(strFile, { indent_size: 4 });
@@ -104,7 +63,7 @@ else if (process.argv[2] === 'newtable') { // new or newtable
 
 
 }
-else if (process.argv[2] === 'migrate') {
+else if (process.argv[2] === 'seed') {
     // read the most recent migration
     migr.MigrationModel.findAll({
         where: {
