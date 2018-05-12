@@ -11,9 +11,10 @@ const migr = new Migrator('./db_config.yml');
 let chosenDb = 'development';
 
 console.log(process.argv);
+console.log(process.argv.length);
 
 if ( process.argv.length ===4) {
-    chosenDb = process.argv[4];
+    chosenDb = process.argv[3];
 }
 console.log(chosenDb);
 migr.setUpDB(chosenDb);
@@ -73,21 +74,26 @@ else if (process.argv[2] === 'migrate') {
             ['created_at', 'ASC']
         ]
     }).then(results => {
-        results.forEach(res => {
+        if (results.length >0) {
+            results.forEach(res => {
 
-            //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
-            const migrationClass = require(`./migrations/${res.fileName}.js`);
+                //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
+                const migrationClass = require(`./migrations/${res.fileName}.js`);
 
-            let mg = new migrationClass(migr);
-            console.log('Executing migration ... ' + res.fileName);
+                let mg = new migrationClass(migr);
+                console.log('Executing migration ... ' + res.fileName);
 
-            mg.schemaUp().then(result => {
-                console.log('Migration result ' + result);
-                migr.update(res.fileName);
+                mg.schemaUp().then(result => {
+                    console.log('Migration result ' + result);
+                    migr.update(res.fileName);
+                });
+
+
             });
-
-
-        });
-    })
+        }
+        else {
+            console.log('Nothing to migrate');
+        }
+    });
 
 }

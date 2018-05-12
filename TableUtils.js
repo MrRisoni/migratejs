@@ -122,8 +122,11 @@ export default class TableUtils
             });
 
             console.log('Executing Promise Array');
-            Promise.all(PromiseArray).then(function(values) {
+            Promise.all(PromiseArray).then(values => {
                 console.log(values);
+                resolve({success:true});
+            }).catch(err => {
+                reject({success:false});
             });
         });
 
