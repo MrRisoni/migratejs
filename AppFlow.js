@@ -49,14 +49,13 @@ export default class AppFlow{
         const strFile = lineFiles.join(os.EOL);
         const beautyString = beautify(strFile, { indent_size: 4 });
 
-        fs.writeFile("migrations/" + className + ".js", beautyString, function (err) {
-            if (err) {
-                return console.log(err);
-            }
-            self.migr.insertMigration(className);
-            console.log("The file was saved!");
-            process.exit();
-        });
+        this.promiseFSWrite({filename: className, contents: beautyString}).then(resWrite => {
+            console.log(resWrite);
+            self.migr.insertMigration(className).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
+
+        }).catch(errWrite => console.log(errWrite));
 
     }
 
@@ -95,15 +94,28 @@ export default class AppFlow{
         const strFile = lineFiles.join(os.EOL);
         const beautyString = beautify(strFile, { indent_size: 4 });
 
-        fs.writeFile("seeds/" + className + ".js", beautyString, function (err) {
-            if (err) {
-                return console.log(err);
-            }
-            self.migr.insertSeed(className);
-            console.log("The file was saved!");
-            process.exit();
-        });
+        this.promiseFSWrite({filename: className, contents: beautyString}).then(resWrite => {
+            console.log(resWrite);
+            self.migr.insertSeed(className).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
 
+        }).catch(errWrite => console.log(errWrite));
+
+    }
+
+
+    promiseFSWrite(args)
+    {
+        return new Promise(function (resolve, reject) {
+
+            fs.writeFile("seeds/" + args.filename + ".js", args.contents, function (err) {
+                if (err) {
+                    reject('Error writing file ' + err);
+                }
+                resolve('File written!');
+            });
+        });
     }
 }
 

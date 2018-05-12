@@ -23,14 +23,14 @@ console.log(chosenDb);
 migr.setUpDB(chosenDb);
 
 
-const app = new AppFlow(migr);
+const app_flow = new AppFlow(migr);
 
 
 if (process.argv[2] === 'newseed') {
-    app.newSeed(process.argv[3])
+    app_flow.newSeed(process.argv[3])
 }
 else if (process.argv[2] === 'newtable') { // new or newtable
-    app.newMigration(process.argv[3])
+    app_flow.newMigration(process.argv[3])
 }
 else if (process.argv[2] === 'migrate') {
     // read the most recent migration

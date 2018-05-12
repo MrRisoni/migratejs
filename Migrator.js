@@ -100,8 +100,10 @@ export default class Migrator {
 
     insertSeed(fileName) {
         const query = " INSERT INTO `seeds` (`file_name`) VALUES ('" + fileName + "')";
-        this.connection.query(query).then(myTableRows => {});
+        console.log(query);
+        return this.connection.query(query, { type: this.connection.QueryTypes.INSERT});
     }
+
 
     update(migrationFile) {
         this.connection.query("UPDATE migrations SET processed = 1, " +
