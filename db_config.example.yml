@@ -1,0 +1,11 @@
+---
+development:
+  db: database_develop
+  host: hostname
+  user: root_user
+  pass: password
+production:
+  db: database
+  host: hostname
+  user: root_user
+  pass: password

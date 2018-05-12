@@ -4,3 +4,8 @@ development:
   host: localhost
   pass:
   user: root
+production:
+    db: foradb
+    host: localhost
+    pass:
+    user: root
