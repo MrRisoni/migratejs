@@ -26,12 +26,17 @@ export default class Column {
                 if (key == 'type') {
                     this.setType(value);
                 }
+                if (key == 'signed')
+                {
+                    this.setSign(value);
+                }
                 if (key == 'primary') {
                     this.setPrimary();
                 }
                 if (key == 'null') {
                     this.setIsNull(value);
                 }
+
             }
         });
     }
@@ -44,9 +49,9 @@ export default class Column {
 
 
 
-    setUnsigned()
+    setSign(value)
     {
-        this.unSigned = true;
+        this.unSigned = !value;
     }
 
     setPrimary()

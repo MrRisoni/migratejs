@@ -15,7 +15,7 @@ module.exports =
                 let tbl = new TableUtils('publishers', this.db);
 
                 tbl.addColumn(new Column('id', [{type: 'int'},
-                    {sign: 'unsigned'},
+                    {signed: false},
                     {primary: true}]))
                     .addColumn(new Column('title', [{type: 'VARCHAR'},
                         {length: 45},
