@@ -9,6 +9,7 @@ export default class Migrator {
         this.dbg = true;
         this.connection = null;
         this.MigrationModel = null;
+        this.SeederModel = null;
         this.yamlConfigFile = ymlConfig;
     }
 
@@ -16,9 +17,7 @@ export default class Migrator {
 
         try {
             const settings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
-            console.log(JSON.stringify(settings));
-            console.log(dbOption);
-            console.log(JSON.stringify(settings.dbOption));
+            console.log('connecting to ' + dbOption);
 
             this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, '', {
                 host: settings[dbOption].host,
@@ -66,20 +65,42 @@ export default class Migrator {
             );
 
 
+            this.SeederModel = this.connection.define('seeds', {
+                    id: {
+                        type: Sequelize.INTEGER.UNSIGNED,
+                        field: 'id',
+                        autoIncrement: true,
+                        primaryKey: true,
+                    },
+                    fileName: {
+                        type: Sequelize.CHAR,
+                        field: 'file_name'
+                    },
+                    processes: {
+                        type: Sequelize.INTEGER.UNSIGNED,
+                        field: 'processed'
+                    }
+                },
+                {
+                    timestamps: false,
+                    freezeTableName: true
+                }
+            );
+
+
         } catch (e) {
             console.log(e);
         }
     }
 
-    insert(fileName) {
+    insertMigration(fileName) {
         const query = " INSERT INTO `migrations` (`file_name`) VALUES ('" + fileName + "')";
-        this.connection.query(query).then(myTableRows => {
-        });
-
+        this.connection.query(query).then(myTableRows => {});
     }
 
-    getPendingMigrations() {
-        return this.connection.query("SELECT file_name FROM migrations WHERE processed =0 ORDER BY created_at ASC");
+    insertSeed(fileName) {
+        const query = " INSERT INTO `seeds` (`file_name`) VALUES ('" + fileName + "')";
+        this.connection.query(query).then(myTableRows => {});
     }
 
     update(migrationFile) {

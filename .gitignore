@@ -25,3 +25,5 @@ yarn-error.log*
 *googleAPIKey
 src/googleAPIKey.json
 src/appConfig.json
+seeds/*.js
+migrations/*.js
