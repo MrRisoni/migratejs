@@ -3,13 +3,20 @@ import fs from 'fs';
 import os from 'os';
 import beautify from 'js-beautify'
 import Migrator from './Migrator';
-import TableUtils from "./TableUtils";
 
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
 const migr = new Migrator('./db_config.yml');
+let chosenDb = 'development';
 
+console.log(process.argv);
+
+if ( process.argv.length ===4) {
+    chosenDb = process.argv[4];
+}
+console.log(chosenDb);
+migr.setUpDB(chosenDb);
 
 if (process.argv[2] === 'newtable') { // new or newtable
     // make migration file

@@ -9,12 +9,19 @@ export default class Migrator {
         this.dbg = true;
         this.connection = null;
         this.MigrationModel = null;
+        this.yamlConfigFile = ymlConfig;
+    }
+
+    setUpDB(dbOption){
 
         try {
-            const settings = yaml.safeLoad(fs.readFileSync(ymlConfig, 'utf8'));
+            const settings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
+            console.log(JSON.stringify(settings));
+            console.log(dbOption);
+            console.log(JSON.stringify(settings.dbOption));
 
-            this.connection = new Sequelize(settings.development.db, settings.development.user, '', {
-                host: settings.development.host,
+            this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, '', {
+                host: settings[dbOption].host,
                 dialect: 'mysql',
                 pool: {
                     max: 5,
