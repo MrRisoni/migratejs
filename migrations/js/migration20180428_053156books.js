@@ -1,6 +1,6 @@
-import TableUtils from '../TableUtils';
+import TableUtils from '../../TableUtils';
 
-import Column from '../Column';
+import Column from '../../Column';
 
 module.exports =
     class migration20180428_053156books {

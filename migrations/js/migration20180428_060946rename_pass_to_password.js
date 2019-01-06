@@ -1,5 +1,5 @@
-import TableUtils from '../TableUtils';
-import Column from '../Column';
+import TableUtils from '../../TableUtils';
+import Column from '../../Column';
 
 module.exports =
     class migration20180428_060946rename_pass_to_password {

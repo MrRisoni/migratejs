@@ -16,7 +16,8 @@ export default class Migrator {
     setUpDB(dbOption){
 
         try {
-            const settings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
+            const projectSettings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
+            const settings =projectSettings['database'];
             console.log('connecting to ' + dbOption);
 
             this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, '', {

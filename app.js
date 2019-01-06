@@ -1,7 +1,4 @@
 import moment from 'moment';
-import fs from 'fs';
-import os from 'os';
-import beautify from 'js-beautify'
 import Migrator from './Migrator';
 import AppFlow from './AppFlow';
 
@@ -13,7 +10,6 @@ let chosenDb = 'development';
 
 
 console.log(process.argv);
-console.log(process.argv.length);
 /*
 if ( process.argv.length ===5) {
     chosenDb = process.argv[4];
@@ -28,6 +24,9 @@ const app_flow = new AppFlow(migr);
 
 if (process.argv[2] === 'newseed') {
     app_flow.newSeed(process.argv[3])
+}
+else if (process.argv[2] === 'newsql') {
+    app_flow.newSQLMigration(process.argv[3]);
 }
 else if (process.argv[2] === 'newtable') { // new or newtable
     app_flow.newMigration(process.argv[3])

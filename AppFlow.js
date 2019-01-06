@@ -2,14 +2,43 @@ import moment from 'moment';
 import fs from 'fs';
 import os from 'os';
 import beautify from 'js-beautify'
+import yaml from 'js-yaml';
 
 export default class AppFlow{
 
     constructor(migr) {
         this.migr = migr;
 
+
+       const settings = yaml.safeLoad(fs.readFileSync(this.migr.yamlConfigFile, 'utf8'));
+        this.base = settings['project']['type'];
+
+
+
     }
 
+    newSQLMigration()
+    {
+        // make SQL migration file
+        const stamp = moment().format('YYYYMMDD_hhmmss');
+        const self = this;
+
+        const SQLFileName = 'migration' + stamp + process.argv[3];
+        console.log('SQL ' + SQLFileName);
+        let lineFiles = [];
+
+        lineFiles.push("  ");
+        lineFiles.push("  ");
+
+
+        this.promiseWriteFile({filename: "migrations/sql/" +   SQLFileName + ".sql", contents: lineFiles.join(os.EOL)}).then(resWrite => {
+            console.log(resWrite);
+            self.migr.insertMigration(SQLFileName).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
+
+        }).catch(errWrite => console.log(errWrite));
+    }
 
     newMigration()
     {
@@ -105,11 +134,25 @@ export default class AppFlow{
     }
 
 
+    promiseWriteFile(args)
+    {
+        return new Promise((resolve, reject) => {
+
+            fs.writeFile( args.filename , args.contents,err => {
+                if (err) {
+                    reject('Error writing file ' + err);
+                }
+                resolve('File written!');
+            });
+        });
+    }
+
+
     promiseFSWrite(args)
     {
-        return new Promise(function (resolve, reject) {
+        return new Promise( (resolve, reject) => {
 
-            fs.writeFile("seeds/" + args.filename + ".js", args.contents, function (err) {
+            fs.writeFile("seeds/" + args.filename + ".js", args.contents, err => {
                 if (err) {
                     reject('Error writing file ' + err);
                 }
@@ -133,6 +176,7 @@ export default class AppFlow{
         }).then(results => {
             if (results.length >0) {
                 results.forEach(res => {
+
 
                     //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
                     const migrationClass = require(`./migrations/${res.fileName}.js`);

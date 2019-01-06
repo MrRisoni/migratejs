@@ -1,11 +1,14 @@
 ---
-development:
-  db: foradb_dev
-  host: localhost
-  pass:
-  user: root
-production:
-    db: foradb
+database:
+  development:
+    db: foradb_dev
     host: localhost
     pass:
     user: root
+  production:
+      db: foradb
+      host: localhost
+      pass:
+      user: root
+project:
+  type:sql

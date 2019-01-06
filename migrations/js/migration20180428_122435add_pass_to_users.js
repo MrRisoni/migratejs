@@ -1,5 +1,5 @@
-import TableUtils from '../TableUtils';
-import Column from '../Column';
+import TableUtils from '../../TableUtils';
+import Column from '../../Column';
 
 module.exports =
     class migration20180428_122435add_pass_to_users {
