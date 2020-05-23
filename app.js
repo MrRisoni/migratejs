@@ -1,7 +1,7 @@
-import moment from 'moment';
-import Migrator from './Migrator';
-import AppFlow from './AppFlow';
+const moment = require('moment');
+const Migrator = require('./Migrator');
 
+// $ ./node_modules/@babel/node/bin/babel-node.js app.js
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
@@ -9,7 +9,6 @@ const migr = new Migrator('./.env.yml');
 let chosenDb = 'development';
 
 
-console.log(process.argv);
 /*
 if ( process.argv.length ===5) {
     chosenDb = process.argv[4];
@@ -18,10 +17,17 @@ console.log(chosenDb);
 */
 migr.setUpDB(chosenDb);
 
-
-const app_flow = new AppFlow(migr);
-
-
+console.log('log args');
+console.log(process.argv)
+if (process.argv[2] === 'g' && process.argv[3] === 'model') {
+    rest_args = process.argv.map((arg,idx) => {
+        if (idx>3) {
+            return arg;
+        }
+    });
+    migr.newMigration(rest_args)
+}
+/*
 if (process.argv[2] === 'newseed') {
     app_flow.newSeed(process.argv[3])
 }
@@ -37,3 +43,4 @@ else if (process.argv[2] === 'migrate') {
 else if (process.argv[2] === 'seed') {
     app_flow.executeSeeds();
 }
+*/

@@ -7,34 +7,19 @@
   "author": "phoenix <vanguelisk@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "js-beautify": "^1.7.5",
     "js-yaml": "^3.11.0",
     "moment": "^2.22.1",
-    "mysql2": "^1.5.3",
-    "sequelize": "^4.37.6"
+    "mysql2": "^2.1.0",
+    "sequelize": "^5.21.10"
   },
   "scripts": {
-    "migrate": "babel-node app.js migrate",
-    "seed": "babel-node app.js seed"
+    "migrate": "babel-node app.js migrate"
   },
   "devDependencies": {
-    "@babel/node": "^7.0.0-beta.46",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
-    "babel-plugin-wildcard": "^5.0.0",
-    "babel-polyfill": "^6.26.0",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/node": "^7.8.7",
     "babel-preset-es2015": "^6.24.1",
-    "babel-preset-es2016": "^6.24.1",
-    "babel-register": "^6.26.0",
-    "eslint": "^5.11.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.2",
-    "file-loader": "^2.0.0",
-    "mocha": "^4.1.0",
-    "sinon": "^4.1.3",
-    "webpack": "^4.28.0"
+    "eslint": "^7.1.0"
   }
 }

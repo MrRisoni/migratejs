@@ -1,9 +1,12 @@
-import yaml from 'js-yaml';
-import fs from 'fs';
-import mysql from 'mysql2';
-import Sequelize from 'sequelize';
+const moment = require('moment');
+const os = require('os');
+const yaml = require('js-yaml');
+const fs = require('fs');
 
-export default class Migrator {
+
+var Sequelize = require('sequelize');
+
+module.exports = class Migrator {
 
     constructor(ymlConfig) {
         this.dbg = true;
@@ -19,8 +22,9 @@ export default class Migrator {
             const projectSettings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
             const settings =projectSettings['database'];
             console.log('connecting to ' + dbOption);
+            console.log(settings[dbOption])
 
-            this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, '', {
+            this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, settings[dbOption].pass, {
                 host: settings[dbOption].host,
                 dialect: 'mysql',
                 pool: {
@@ -29,7 +33,7 @@ export default class Migrator {
                     acquire: 30000,
                     idle: 10000
                 },
-                logging: true
+                logging: false
             });
 
 
@@ -66,27 +70,6 @@ export default class Migrator {
             );
 
 
-            this.SeederModel = this.connection.define('seeds', {
-                    id: {
-                        type: Sequelize.INTEGER.UNSIGNED,
-                        field: 'id',
-                        autoIncrement: true,
-                        primaryKey: true,
-                    },
-                    fileName: {
-                        type: Sequelize.CHAR,
-                        field: 'file_name'
-                    },
-                    processes: {
-                        type: Sequelize.INTEGER.UNSIGNED,
-                        field: 'processed'
-                    }
-                },
-                {
-                    timestamps: false,
-                    freezeTableName: true
-                }
-            );
 
 
         } catch (e) {
@@ -94,17 +77,49 @@ export default class Migrator {
         }
     }
 
+    newMigration(args)
+    {
+        // make migration file
+        const stamp = moment().format('YYYYMMDD_hhmmss');
+        const self = this;
+
+        const className = 'migration' + stamp + args[0];
+
+        let lineFiles = [];
+        lineFiles.push(" import TableUtils from '../TableUtils'; ");
+
+
+        const strFile = lineFiles.join(os.EOL);
+
+        this.promiseFSWrite({filename: className, contents: strFile}).then(resWrite => {
+            console.log(resWrite);
+            self.insertMigration(className).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
+
+        }).catch(errWrite => console.log(errWrite));
+
+    }
+
+    promiseFSWrite(args)
+    {
+        return new Promise( (resolve, reject) => {
+
+            fs.writeFile("migrations/" + args.filename + ".yaml", args.contents, err => {
+                if (err) {
+                    reject('Error writing file ' + err);
+                }
+                resolve('File written!');
+            });
+        });
+    }
+
     insertMigration(fileName) {
         const query = " INSERT INTO `migrations` (`file_name`) VALUES ('" + fileName + "')";
-        this.connection.query(query).then(myTableRows => {});
-    }
+      //  this.connection.query(query).then(myTableRows => {});
+        return this.connection.query(query);
 
-    insertSeed(fileName) {
-        const query = " INSERT INTO `seeds` (`file_name`) VALUES ('" + fileName + "')";
-        console.log(query);
-        return this.connection.query(query, { type: this.connection.QueryTypes.INSERT});
     }
-
 
     update(migrationFile) {
         this.connection.query("UPDATE migrations SET processed = 1, " +
