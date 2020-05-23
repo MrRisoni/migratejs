@@ -20,9 +20,11 @@ migr.setUpDB(chosenDb);
 console.log('log args');
 console.log(process.argv)
 if (process.argv[2] === 'g' && process.argv[3] === 'model') {
-    rest_args = process.argv.map((arg,idx) => {
+    var rest_args = [];
+    process.argv.forEach((arg,idx) => {
         if (idx>3) {
-            return arg;
+           // return arg;
+            rest_args.push(arg)
         }
     });
     migr.newMigration(rest_args)

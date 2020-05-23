@@ -79,21 +79,29 @@ module.exports = class Migrator {
 
     newMigration(args)
     {
-        // make migration file
+        console.log('migration args')
+        console.log(args)
+        const model_name = args[0];
         const stamp = moment().format('YYYYMMDD_hhmmss');
         const self = this;
 
-        const className = 'migration' + stamp + args[0];
+        const migrationName = 'migration' + stamp + '_' +model_name;
 
-        let lineFiles = [];
-        lineFiles.push(" import TableUtils from '../TableUtils'; ");
+        let yamlData = {create_table:1,
+        table_name:model_name,id:{type:'bigint',unsigned:true},
+        created_at:true,updated_at:true,columns:[]};
+
+        for (var col = 1; col < args.length;col++) {
+            var col_data = args[col].split(':');
+            yamlData.columns.push({title:col_data[0],type:'VARCHAR'})
+        }
 
 
-        const strFile = lineFiles.join(os.EOL);
+        let yamlStr = yaml.safeDump(yamlData);
 
-        this.promiseFSWrite({filename: className, contents: strFile}).then(resWrite => {
+        this.promiseFSWrite({filename: migrationName, contents: yamlStr}).then(resWrite => {
             console.log(resWrite);
-            self.insertMigration(className).then(resDB => {
+            self.insertMigration(migrationName).then(resDB => {
                 process.exit();
             }).catch(errDB => console.log(errDB));
 

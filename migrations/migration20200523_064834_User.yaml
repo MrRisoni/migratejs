@@ -1,0 +1,12 @@
+create_table: 1
+table_name: User
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: title
+    type: VARCHAR
+  - title: email
+    type: VARCHAR
