@@ -138,37 +138,4 @@ export default class TableUtils
     }
 
 
-    insert(dataRows) {
-        return new Promise((resolve, reject) => {
-
-            console.log('insert data');
-            let PromiseArray = [];
-
-            dataRows.forEach(row => {
-                console.log(row);
-                let col_names = [];
-                let values = [];
-                //runGenericQuery
-
-                for (const [key, value] of Object.entries(row)) {
-                    col_names.push(key )
-                    values.push("'" + value + "'")
-                }
-
-                let sql = " INSERT INTO `" + this.name + "`  (" + col_names.join(',') + ")  VALUES (" + values.join(',') + ") ";
-                console.log(sql);
-                PromiseArray.push(this.db.runGenericQuery(sql));
-
-
-            });
-
-            Promise.all(PromiseArray).then(values => {
-                console.log(values);
-                resolve({success: true});
-            }).catch(err => {
-                reject({success: false});
-            });
-
-        });
-    }
 }

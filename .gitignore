@@ -24,3 +24,5 @@ yarn-error.log*
 seeds/*.js
 migrations/*.js
 .env.yml
+migrations/*.yml
+/migrations

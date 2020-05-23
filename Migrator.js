@@ -12,8 +12,8 @@ module.exports = class Migrator {
         this.dbg = true;
         this.connection = null;
         this.MigrationModel = null;
-        this.SeederModel = null;
         this.yamlConfigFile = ymlConfig;
+        this.supportedColTypes = ['tinyint','int','bigint','mediumint','varchar','text','float','decimal','date','datetime']
     }
 
     setUpDB(dbOption){
@@ -93,7 +93,12 @@ module.exports = class Migrator {
 
         for (var col = 1; col < args.length;col++) {
             var col_data = args[col].split(':');
-            yamlData.columns.push({title:col_data[0],type:'VARCHAR'})
+            var col_type = col_data[1].toUpperCase();
+            if (this.supportedColTypes.indexOf(col_data[1]) <0) {
+                // oops type not  supported
+            }
+
+            yamlData.columns.push({title:col_data[0],type:col_type})
         }
 
 
@@ -123,8 +128,7 @@ module.exports = class Migrator {
     }
 
     insertMigration(fileName) {
-        const query = " INSERT INTO `migrations` (`file_name`) VALUES ('" + fileName + "')";
-      //  this.connection.query(query).then(myTableRows => {});
+        const query = " INSERT INTO `migrations` (`file_name`,`created_at`) VALUES ('" + fileName + "',NOW())";
         return this.connection.query(query);
 
     }
@@ -168,6 +172,50 @@ module.exports = class Migrator {
             });
         });
     }
+
+
+    executeMigrations()
+    {
+        const self = this;
+
+        self.MigrationModel.findAll({
+            where: {
+                processed: 0
+            },
+            order: [
+                ['created_at', 'ASC']
+            ]
+        }).then(results => {
+            if (results.length >0) {
+                results.forEach(res => {
+
+
+                    let fileContents = fs.readFileSync(`./migrations/${res.fileName}.yaml`, 'utf8');
+                    let data = yaml.safeLoad(fileContents);
+
+                    console.log(data);
+
+                  /*  //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
+                    const migrationClass = require(`./migrations/${res.fileName}.js`);
+
+                    let mg = new migrationClass(self.migr);
+                    console.log('Executing migration ... ' + res.fileName);
+
+                    mg.schemaUp().then(result => {
+                        console.log('Migration result ' + result);
+                        self.migr.update(res.fileName);
+                    });*/
+
+
+                });
+            }
+            else {
+                console.log('Nothing to migrate');
+            }
+        });
+
+    }
+
 
 
 }

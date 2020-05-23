@@ -29,6 +29,9 @@ if (process.argv[2] === 'g' && process.argv[3] === 'model') {
     });
     migr.newMigration(rest_args)
 }
+else if (process.argv[2] === 'migrate') {
+    migr.executeMigrations();
+}
 /*
 if (process.argv[2] === 'newseed') {
     app_flow.newSeed(process.argv[3])
