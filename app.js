@@ -5,7 +5,7 @@ import AppFlow from './AppFlow';
 
 const stamp = moment().format('YYYYMMDD_hhmmss');
 
-const migr = new Migrator('./db_config.yml');
+const migr = new Migrator('./.env.yml');
 let chosenDb = 'development';
 
 
