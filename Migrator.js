@@ -27,6 +27,11 @@ module.exports = class Migrator {
             this.connection = new Sequelize(settings[dbOption].db, settings[dbOption].user, settings[dbOption].pass, {
                 host: settings[dbOption].host,
                 dialect: 'mysql',
+                define: {
+   charset: 'utf8',
+   collate: 'utf8_general_ci',
+   timestamps: true
+ },
                 pool: {
                     max: 5,
                     min: 0,
@@ -194,6 +199,27 @@ module.exports = class Migrator {
                     let data = yaml.safeLoad(fileContents);
 
                     console.log(data);
+                    let columnsSQL = ["`id` BIGINT"];
+                    data.columns.forEach((item, i) => {
+                      columnsSQL.push(this.makeColumnSQL(item));
+                    });
+
+                    if (data.created_at) {
+                      columnsSQL.push(" created_at DATETIME")
+                    }
+                    if (data.updated_at) {
+                      columnsSQL.push(" updated_at DATETIME")
+                    }
+
+
+                    let createSQL = ' CREATE TABLE ' + data.table_name + ' ( ' + columnsSQL.join(',') + ')';
+
+                    console.log(createSQL);
+                    console.log(res.id + " " + res.fileName)
+
+                    this.connection.query(createSQL).then(
+                        this.connection.query("UPDATE migrations SET processed=1 WHERE id = '"+ res.id +"' ")
+                    );
 
                   /*  //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
                     const migrationClass = require(`./migrations/${res.fileName}.js`);
@@ -216,6 +242,32 @@ module.exports = class Migrator {
 
     }
 
+
+   makeColumnSQL(col){
+      let sql = "`" + col.title + "`"
+
+      console.log(col.options[0]);
+      switch (col.type) {
+        case 'TEXT':
+          sql += " TEXT ";//CHARACTER SET utf8 COLLATE " + col.options[0]['collation']
+          break;
+        case 'DECIMAL':
+          sql +=  " DECIMAL("+col.options[0]['precision'] + "," + col.options[0]['scale'] + ")"
+          if (col.options[0]['unsigned']) {
+            sql += ' UNSIGNED '
+          }
+          if (col.options[0]['not_null']) {
+            sql += ' NOT NULL '
+          }
+          sql += " DEFAULT '0' "
+
+          break;
+        default:
+          sql = '';
+      }
+
+      return sql
+   }
 
 
 }
