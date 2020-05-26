@@ -29,23 +29,16 @@ if (process.argv[2] === 'g' && process.argv[3] === 'model') {
     });
     migr.newMigration(rest_args)
 }
+else if (process.argv[2].indexOf('AddReference') >-1) {
+  console.log('Creating index');
+      migr.newReference(process.argv[2])
+}
 else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }
 /*
-if (process.argv[2] === 'newseed') {
+if (process.argv[2] === 'rollback') {
     app_flow.newSeed(process.argv[3])
 }
-else if (process.argv[2] === 'newsql') {
-    app_flow.newSQLMigration(process.argv[3]);
-}
-else if (process.argv[2] === 'newtable') { // new or newtable
-    app_flow.newMigration(process.argv[3])
-}
-else if (process.argv[2] === 'migrate') {
-    app_flow.executeMigrations();
-}
-else if (process.argv[2] === 'seed') {
-    app_flow.executeSeeds();
-}
+
 */

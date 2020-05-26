@@ -1,0 +1,10 @@
+support prefix in columns
+
+support foreign keys
+support unique indices
+support multiple unique columns index
+support plurazation 
+
+MERGE TO MASTER
+
+rollback migration

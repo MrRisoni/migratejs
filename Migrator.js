@@ -246,10 +246,12 @@ module.exports = class Migrator {
    makeColumnSQL(col){
       let sql = "`" + col.title + "`"
 
-      console.log(col.options[0]);
       switch (col.type) {
+        case 'STRING':
+          sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
+          break;
         case 'TEXT':
-          sql += " TEXT ";//CHARACTER SET utf8 COLLATE " + col.options[0]['collation']
+          sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
           break;
         case 'DECIMAL':
           sql +=  " DECIMAL("+col.options[0]['precision'] + "," + col.options[0]['scale'] + ")"
@@ -269,5 +271,24 @@ module.exports = class Migrator {
       return sql
    }
 
+
+newReference(ref){
+  console.log(ref);
+
+  // AddReferenceXToY
+  ref = ref.replace('AddReference','')
+  console.log(ref);
+  const data = ref.split('To')
+  let from_table = data[0];
+  let to_table =  data[1];
+  let ref_col = '';
+
+
+  var natural = require('natural');
+  var nounInflector = new natural.NounInflector();
+console.log(nounInflector.pluralize('radius'));
+
+  console.log(from_table + ' ' + to_table + ref_col);
+}
 
 }
