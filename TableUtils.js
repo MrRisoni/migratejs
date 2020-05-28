@@ -70,58 +70,6 @@ export default class TableUtils
         });
     }
 
-    create()
-    {
-        return new Promise((resolve, reject) => {
-
-
-            let columnsSQL = [];
-
-            this.columns.forEach(col => {
-                columnsSQL.push(col.getSQL());
-            });
-
-
-            this.createSQL = ' CREATE TABLE ' + this.name + ' ( ' + columnsSQL.join(',');
-            this.columns.forEach(col => {
-                if (col.isPrimary === true) {
-                    this.createSQL += ' , PRIMARY KEY (' + col.name + ') ';
-
-                }
-
-            });
-
-            this.createSQL += ' ) ';
-
-            console.log(this.createSQL);
-
-
-            let PromiseArray = [this.db.execute(this.createSQL)];
-
-
-            // indices
-            //  this.addIndices();
-            this.indices.forEach(idx => {
-                const idxName = idx.type + '_' + idx.columns.join('_');
-
-                let indexSQL = ' CREATE ' + idx.type + ' INDEX ' + idxName.toLowerCase()
-                    + ' ON ' + this.name + '(' + idx.columns.join(',') + ')';
-
-                PromiseArray.push(this.db.execute(indexSQL))
-            });
-
-            console.log('Executing Promise Array');
-            Promise.all(PromiseArray).then(values => {
-                console.log(values);
-                resolve({success: true});
-            }).catch(err => {
-                reject({success: false});
-            });
-
-
-        });
-
-    }
 
     addIndices()
     {

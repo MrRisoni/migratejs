@@ -106,6 +106,7 @@ module.exports = class Migrator {
 
         let yamlData = {
             create_table: 1, prefix: prfx,
+            name:migrationName,
             table_name: model_name, id: {type: 'bigint', unsigned: true},
             created_at: true, updated_at: true, columns: []
         };
@@ -212,7 +213,8 @@ module.exports = class Migrator {
                     let prefix = data.prefix + '_';
 
                     console.log(data);
-                    let columnsSQL = [prefix + 'id BIGINT'];
+                    let pKey = prefix + 'id ';
+                    let columnsSQL = [pKey +  data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
                     data.columns.forEach((item, i) => {
                         columnsSQL.push(this.makeColumnSQL(item, prefix));
                     });
@@ -224,6 +226,8 @@ module.exports = class Migrator {
                         columnsSQL.push(prefix + "updated_at DATETIME")
                     }
 
+                    columnsSQL.push(" PRIMARY KEY ("+ pKey +")")
+
 
                     let createSQL = ' CREATE TABLE ' + data.table_name + ' ( ' + columnsSQL.join(',') + ')';
 
@@ -234,16 +238,6 @@ module.exports = class Migrator {
                         this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
                     );
 
-                    /*  //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
-                      const migrationClass = require(`./migrations/${res.fileName}.js`);
-
-                      let mg = new migrationClass(self.migr);
-                      console.log('Executing migration ... ' + res.fileName);
-
-                      mg.schemaUp().then(result => {
-                          console.log('Migration result ' + result);
-                          self.migr.update(res.fileName);
-                      });*/
 
 
                 });
