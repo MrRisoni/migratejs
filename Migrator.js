@@ -2,6 +2,7 @@ const moment = require('moment');
 const os = require('os');
 const yaml = require('js-yaml');
 const fs = require('fs');
+  const natural = require('natural');
 
 
 var Sequelize = require('sequelize');
@@ -86,17 +87,31 @@ module.exports = class Migrator {
     {
         console.log('migration args')
         console.log(args)
-        const model_name = args[0];
+                 var nounInflector = new natural.NounInflector();
+
+        let model_name = nounInflector.pluralize(args[0]).toLowerCase();
+
+
         const stamp = moment().format('YYYYMMDD_hhmmss');
         const self = this;
 
         const migrationName = 'migration' + stamp + '_' +model_name;
 
-        let yamlData = {create_table:1,
+        let prfx = '';
+        let colstart = 1;
+        if (args[1].indexOf('--prefix') >-1) {
+            colstart  =2;
+            console.log(args[1]);
+            var tmp = args[1].split('=');
+            prfx = tmp[1]
+        }
+
+
+        let yamlData = {create_table:1, prefix:prfx,
         table_name:model_name,id:{type:'bigint',unsigned:true},
         created_at:true,updated_at:true,columns:[]};
 
-        for (var col = 1; col < args.length;col++) {
+        for (var col = colstart; col < args.length;col++) {
             var col_data = args[col].split(':');
             var col_type = col_data[1].toUpperCase();
             if (this.supportedColTypes.indexOf(col_data[1]) <0) {
@@ -105,7 +120,7 @@ module.exports = class Migrator {
 
             yamlData.columns.push({title:col_data[0],type:col_type})
         }
-
+        console.log(yamlData);
 
         let yamlStr = yaml.safeDump(yamlData);
 
@@ -289,6 +304,15 @@ newReference(ref){
 console.log(nounInflector.pluralize('radius'));
 
   console.log(from_table + ' ' + to_table + ref_col);
+  // get primary key
+
+    this.connection.query("SHOW KEYS FROM '" + to_table + "' WHERE Key_name = 'PRIMARY'").then(rsl => {
+
+            const pkey = rsl.Column_name;
+
+    });
+
+
 }
 
 }
