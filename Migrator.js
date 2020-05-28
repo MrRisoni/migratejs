@@ -106,7 +106,7 @@ module.exports = class Migrator {
 
         let yamlData = {
             create_table: 1, prefix: prfx,
-            name:migrationName,
+            name: migrationName,
             table_name: model_name, id: {type: 'bigint', unsigned: true},
             created_at: true, updated_at: true, columns: []
         };
@@ -207,38 +207,49 @@ module.exports = class Migrator {
             if (results.length > 0) {
                 results.forEach(res => {
 
-
+                    console.log(res.fileName);
                     let fileContents = fs.readFileSync(`./migrations/${res.fileName}.yaml`, 'utf8');
                     let data = yaml.safeLoad(fileContents);
                     let prefix = data.prefix + '_';
-
-                    console.log(data);
-                    let pKey = prefix + 'id';
-                    let columnsSQL = ["`" + pKey +"`  " +  data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
-                    data.columns.forEach((item, i) => {
-                        columnsSQL.push(this.makeColumnSQL(item, prefix));
-                    });
-
-                    if (data.created_at) {
-                        columnsSQL.push("`" + prefix + "created_at` DATETIME")
+                    console.log(data)
+                    if(data.create_index ==1){
+                        console.log('creating index');
+                        let cols = data.columns.map(col => {return col.title});
+                        let indexSQL= 'CREATE ' + data.type +' INDEX ' + data.name + ' ON ' + data.table.toLowerCase();
+                        indexSQL +=  ' ( ' + cols.join(',') + ')'
+                        console.log(indexSQL)
+                        this.connection.query(indexSQL).then(success => {
+                            this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
+                        });
                     }
-                    if (data.updated_at) {
-                        columnsSQL.push("`"  + prefix + "updated_at` DATETIME")
-                    }
-
-                    columnsSQL.push(" PRIMARY KEY ("+ pKey +")")
-
-
-                    let createSQL = ' CREATE TABLE ' + data.table_name + ' ( ' + columnsSQL.join(',') + ')';
-
-                    console.log(createSQL);
-                    console.log(res.id + " " + res.fileName)
-
-                    this.connection.query(createSQL).then(success => {
-                        this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
+                    if (data.create_table == 1) {
+                        console.log(data);
+                        let pKey = prefix + 'id';
+                        let columnsSQL = ["`" + pKey + "`  " + data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
+                        data.columns.forEach((item, i) => {
+                            columnsSQL.push(this.makeColumnSQL(item, prefix));
                         });
 
+                        if (data.created_at) {
+                            columnsSQL.push("`" + prefix + "created_at` DATETIME")
+                        }
+                        if (data.updated_at) {
+                            columnsSQL.push("`" + prefix + "updated_at` DATETIME")
+                        }
 
+                        columnsSQL.push(" PRIMARY KEY (" + pKey + ")")
+
+
+                        let createSQL = ' CREATE TABLE ' + data.table_name + ' ( ' + columnsSQL.join(',') + ')';
+
+                        console.log(createSQL);
+                        console.log(res.id + " " + res.fileName)
+
+                        this.connection.query(createSQL).then(success => {
+                            this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
+                        });
+
+                    }
 
                 });
             } else {
@@ -280,16 +291,16 @@ module.exports = class Migrator {
         return sql
     }
 
-    newIndex(ref){
+    newIndex(ref) {
         // AddReferenceXTo
         const self = this;
         const stamp = moment().format('YYYYMMDD_hhmmss');
 
         const migrationName = 'migration' + stamp + '_' + ref;
 
-        let to_table  = ref.replace('AddIndexTo', '')
+        let to_table = ref.replace('AddIndexTo', '')
         console.log(to_table);
-        const yamlData={create_index:1,table:to_table,name:'',type:"UNIQUE",columns:[{title:'ColA'}]}
+        const yamlData = {create_index: 1, table: to_table, name: '', type: "UNIQUE", columns: [{title: 'ColA'}]}
         let yamlStr = yaml.safeDump(yamlData);
 
         this.promiseFSWrite({filename: migrationName, contents: yamlStr}).then(resWrite => {
@@ -349,10 +360,10 @@ module.exports = class Migrator {
 
             let fileContents = fs.readFileSync(`./migrations/${rollingBackName}.yaml`, 'utf8');
             let data = yaml.safeLoad(fileContents);
-            if (data.create_table ==1) {
+            if (data.create_table == 1) {
                 const dropSql = "DROP TABLE " + data.table_name;
                 this.connection.query(dropSql).then(res => {
-                    this.connection.query("DELETE FROM  migrations WHERE id = '"  + rollingBackId + "' ").then(res => {
+                    this.connection.query("DELETE FROM  migrations WHERE id = '" + rollingBackId + "' ").then(res => {
                         console.log('OK!');
 
                     }).catch(err1 => {

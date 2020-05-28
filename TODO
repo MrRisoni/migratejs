@@ -1,8 +1,5 @@
 
 support foreign keys
-support unique indices
-support multiple unique columns index
 
-MERGE TO MASTER
 
 multiple primary keys
