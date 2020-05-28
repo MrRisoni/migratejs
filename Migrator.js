@@ -212,18 +212,19 @@ module.exports = class Migrator {
 
                     let fileContents = fs.readFileSync(`./migrations/${res.fileName}.yaml`, 'utf8');
                     let data = yaml.safeLoad(fileContents);
+                    let prefix = data.prefix + '_';
 
                     console.log(data);
-                    let columnsSQL = ["`id` BIGINT"];
+                    let columnsSQL = [prefix+ 'id BIGINT'];
                     data.columns.forEach((item, i) => {
-                      columnsSQL.push(this.makeColumnSQL(item));
+                      columnsSQL.push(this.makeColumnSQL(item,prefix));
                     });
 
                     if (data.created_at) {
-                      columnsSQL.push(" created_at DATETIME")
+                      columnsSQL.push(prefix+ "created_at DATETIME")
                     }
                     if (data.updated_at) {
-                      columnsSQL.push(" updated_at DATETIME")
+                      columnsSQL.push(prefix + "updated_at DATETIME")
                     }
 
 
@@ -258,8 +259,8 @@ module.exports = class Migrator {
     }
 
 
-   makeColumnSQL(col){
-      let sql = "`" + col.title + "`"
+   makeColumnSQL(col,prefix){
+      let sql = "`" + prefix + col.title + "`"
 
       switch (col.type) {
         case 'STRING':
