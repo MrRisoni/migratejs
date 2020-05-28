@@ -280,6 +280,27 @@ module.exports = class Migrator {
         return sql
     }
 
+    newIndex(ref){
+        // AddReferenceXTo
+        const self = this;
+        const stamp = moment().format('YYYYMMDD_hhmmss');
+
+        const migrationName = 'migration' + stamp + '_' + ref;
+
+        let to_table  = ref.replace('AddIndexTo', '')
+        console.log(to_table);
+        const yamlData={create_index:1,table:to_table,name:'',type:"UNIQUE",columns:[{title:'ColA'}]}
+        let yamlStr = yaml.safeDump(yamlData);
+
+        this.promiseFSWrite({filename: migrationName, contents: yamlStr}).then(resWrite => {
+            console.log(resWrite);
+            self.insertMigration(migrationName).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
+
+        }).catch(errWrite => console.log(errWrite));
+
+    }
 
     newReference(ref) {
         console.log(ref);

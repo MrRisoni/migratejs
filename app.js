@@ -33,6 +33,10 @@ else if (process.argv[2].indexOf('AddReference') >-1) {
   console.log('Creating index');
       migr.newReference(process.argv[2])
 }
+else if (process.argv[2].indexOf('AddIndex') >-1) {
+    console.log('Creating index');
+    migr.newIndex(process.argv[2])
+}
 else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }
