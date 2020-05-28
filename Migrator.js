@@ -2,7 +2,7 @@ const moment = require('moment');
 const os = require('os');
 const yaml = require('js-yaml');
 const fs = require('fs');
-  const natural = require('natural');
+const natural = require('natural');
 
 
 var Sequelize = require('sequelize');
@@ -14,14 +14,14 @@ module.exports = class Migrator {
         this.connection = null;
         this.MigrationModel = null;
         this.yamlConfigFile = ymlConfig;
-        this.supportedColTypes = ['tinyint','int','bigint','mediumint','varchar','text','float','decimal','date','datetime']
+        this.supportedColTypes = ['tinyint', 'int', 'bigint', 'mediumint', 'varchar', 'text', 'float', 'decimal', 'date', 'datetime']
     }
 
-    setUpDB(dbOption){
+    setUpDB(dbOption) {
 
         try {
             const projectSettings = yaml.safeLoad(fs.readFileSync(this.yamlConfigFile, 'utf8'));
-            const settings =projectSettings['database'];
+            const settings = projectSettings['database'];
             console.log('connecting to ' + dbOption);
             console.log(settings[dbOption])
 
@@ -29,10 +29,10 @@ module.exports = class Migrator {
                 host: settings[dbOption].host,
                 dialect: 'mysql',
                 define: {
-   charset: 'utf8',
-   collate: 'utf8_general_ci',
-   timestamps: true
- },
+                    charset: 'utf8',
+                    collate: 'utf8_general_ci',
+                    timestamps: true
+                },
                 pool: {
                     max: 5,
                     min: 0,
@@ -76,18 +76,15 @@ module.exports = class Migrator {
             );
 
 
-
-
         } catch (e) {
             console.log(e);
         }
     }
 
-    newMigration(args)
-    {
+    newMigration(args) {
         console.log('migration args')
         console.log(args)
-                 var nounInflector = new natural.NounInflector();
+        var nounInflector = new natural.NounInflector();
 
         let model_name = nounInflector.pluralize(args[0]).toLowerCase();
 
@@ -95,30 +92,32 @@ module.exports = class Migrator {
         const stamp = moment().format('YYYYMMDD_hhmmss');
         const self = this;
 
-        const migrationName = 'migration' + stamp + '_' +model_name;
+        const migrationName = 'migration' + stamp + '_' + model_name;
 
         let prfx = '';
         let colstart = 1;
-        if (args[1].indexOf('--prefix') >-1) {
-            colstart  =2;
+        if (args[1].indexOf('--prefix') > -1) {
+            colstart = 2;
             console.log(args[1]);
             var tmp = args[1].split('=');
             prfx = tmp[1]
         }
 
 
-        let yamlData = {create_table:1, prefix:prfx,
-        table_name:model_name,id:{type:'bigint',unsigned:true},
-        created_at:true,updated_at:true,columns:[]};
+        let yamlData = {
+            create_table: 1, prefix: prfx,
+            table_name: model_name, id: {type: 'bigint', unsigned: true},
+            created_at: true, updated_at: true, columns: []
+        };
 
-        for (var col = colstart; col < args.length;col++) {
+        for (var col = colstart; col < args.length; col++) {
             var col_data = args[col].split(':');
             var col_type = col_data[1].toUpperCase();
-            if (this.supportedColTypes.indexOf(col_data[1]) <0) {
+            if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
                 // oops type not  supported
             }
 
-            yamlData.columns.push({title:col_data[0],type:col_type})
+            yamlData.columns.push({title: col_data[0], type: col_type})
         }
         console.log(yamlData);
 
@@ -134,9 +133,8 @@ module.exports = class Migrator {
 
     }
 
-    promiseFSWrite(args)
-    {
-        return new Promise( (resolve, reject) => {
+    promiseFSWrite(args) {
+        return new Promise((resolve, reject) => {
 
             fs.writeFile("migrations/" + args.filename + ".yaml", args.contents, err => {
                 if (err) {
@@ -167,7 +165,7 @@ module.exports = class Migrator {
     }
 
     execute(query) {
-        return new Promise((resolve, reject ) => {
+        return new Promise((resolve, reject) => {
             this.connection.query(query, {type: Sequelize.QueryTypes.RAW}).then(rows => {
                 console.log('Exe Migrator_execute');
                 resolve({proceed: true});
@@ -181,8 +179,8 @@ module.exports = class Migrator {
     }
 
 
-    runGenericQuery(sql){
-        return new Promise((resolve, reject ) => {
+    runGenericQuery(sql) {
+        return new Promise((resolve, reject) => {
             this.connection.query(sql, {type: Sequelize.QueryTypes.RAW}).then(rows => {
                 resolve({proceed: true});
 
@@ -194,8 +192,7 @@ module.exports = class Migrator {
     }
 
 
-    executeMigrations()
-    {
+    executeMigrations() {
         const self = this;
 
         self.MigrationModel.findAll({
@@ -206,7 +203,7 @@ module.exports = class Migrator {
                 ['created_at', 'ASC']
             ]
         }).then(results => {
-            if (results.length >0) {
+            if (results.length > 0) {
                 results.forEach(res => {
 
 
@@ -215,16 +212,16 @@ module.exports = class Migrator {
                     let prefix = data.prefix + '_';
 
                     console.log(data);
-                    let columnsSQL = [prefix+ 'id BIGINT'];
+                    let columnsSQL = [prefix + 'id BIGINT'];
                     data.columns.forEach((item, i) => {
-                      columnsSQL.push(this.makeColumnSQL(item,prefix));
+                        columnsSQL.push(this.makeColumnSQL(item, prefix));
                     });
 
                     if (data.created_at) {
-                      columnsSQL.push(prefix+ "created_at DATETIME")
+                        columnsSQL.push(prefix + "created_at DATETIME")
                     }
                     if (data.updated_at) {
-                      columnsSQL.push(prefix + "updated_at DATETIME")
+                        columnsSQL.push(prefix + "updated_at DATETIME")
                     }
 
 
@@ -234,24 +231,23 @@ module.exports = class Migrator {
                     console.log(res.id + " " + res.fileName)
 
                     this.connection.query(createSQL).then(
-                        this.connection.query("UPDATE migrations SET processed=1 WHERE id = '"+ res.id +"' ")
+                        this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
                     );
 
-                  /*  //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
-                    const migrationClass = require(`./migrations/${res.fileName}.js`);
+                    /*  //   const migration20180422_083815authors = require('./migrations/migration20180422_083815authors');
+                      const migrationClass = require(`./migrations/${res.fileName}.js`);
 
-                    let mg = new migrationClass(self.migr);
-                    console.log('Executing migration ... ' + res.fileName);
+                      let mg = new migrationClass(self.migr);
+                      console.log('Executing migration ... ' + res.fileName);
 
-                    mg.schemaUp().then(result => {
-                        console.log('Migration result ' + result);
-                        self.migr.update(res.fileName);
-                    });*/
+                      mg.schemaUp().then(result => {
+                          console.log('Migration result ' + result);
+                          self.migr.update(res.fileName);
+                      });*/
 
 
                 });
-            }
-            else {
+            } else {
                 console.log('Nothing to migrate');
             }
         });
@@ -259,61 +255,98 @@ module.exports = class Migrator {
     }
 
 
-   makeColumnSQL(col,prefix){
-      let sql = "`" + prefix + col.title + "`"
+    makeColumnSQL(col, prefix) {
+        let sql = "`" + prefix + col.title + "`"
 
-      switch (col.type) {
-        case 'STRING':
-          sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
-          break;
-        case 'TEXT':
-          sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
-          break;
-        case 'DECIMAL':
-          sql +=  " DECIMAL("+col.options[0]['precision'] + "," + col.options[0]['scale'] + ")"
-          if (col.options[0]['unsigned']) {
-            sql += ' UNSIGNED '
-          }
-          if (col.options[0]['not_null']) {
-            sql += ' NOT NULL '
-          }
-          sql += " DEFAULT '0' "
+        switch (col.type) {
+            case 'STRING':
+                sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
+                break;
+            case 'TEXT':
+                sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
+                break;
+            case 'DECIMAL':
+                sql += " DECIMAL(" + col.options[0]['precision'] + "," + col.options[0]['scale'] + ")"
+                if (col.options[0]['unsigned']) {
+                    sql += ' UNSIGNED '
+                }
+                if (col.options[0]['not_null']) {
+                    sql += ' NOT NULL '
+                }
+                sql += " DEFAULT '0' "
 
-          break;
-        default:
-          sql = '';
-      }
+                break;
+            default:
+                sql = '';
+        }
 
-      return sql
-   }
-
-
-newReference(ref){
-  console.log(ref);
-
-  // AddReferenceXToY
-  ref = ref.replace('AddReference','')
-  console.log(ref);
-  const data = ref.split('To')
-  let from_table = data[0];
-  let to_table =  data[1];
-  let ref_col = '';
+        return sql
+    }
 
 
-  var natural = require('natural');
-  var nounInflector = new natural.NounInflector();
-console.log(nounInflector.pluralize('radius'));
+    newReference(ref) {
+        console.log(ref);
 
-  console.log(from_table + ' ' + to_table + ref_col);
-  // get primary key
+        // AddReferenceXToY
+        ref = ref.replace('AddReference', '')
+        console.log(ref);
+        const data = ref.split('To')
+        let from_table = data[0];
+        let to_table = data[1];
+        let ref_col = '';
 
-    this.connection.query("SHOW KEYS FROM '" + to_table + "' WHERE Key_name = 'PRIMARY'").then(rsl => {
+
+        var natural = require('natural');
+        var nounInflector = new natural.NounInflector();
+        console.log(nounInflector.pluralize('radius'));
+
+        console.log(from_table + ' ' + to_table + ref_col);
+        // get primary key
+
+        this.connection.query("SHOW KEYS FROM '" + to_table + "' WHERE Key_name = 'PRIMARY'").then(rsl => {
 
             const pkey = rsl.Column_name;
 
-    });
+        });
 
+
+    }
+
+    rollback() {
+        // only for create table now
+        console.log('Rooback qery');
+        this.MigrationModel.findAll({
+            where: {
+                processed: 1
+            },
+            limit: 1,
+            order: [
+                ['created_at', 'DESC']
+            ]
+        }).then(foo => {
+            console.log(foo[0].fileName);
+            const rollingBackName = foo[0].fileName;
+            const rollingBackId = foo[0].id;
+
+
+            let fileContents = fs.readFileSync(`./migrations/${rollingBackName}.yaml`, 'utf8');
+            let data = yaml.safeLoad(fileContents);
+            if (data.create_table ==1) {
+                const dropSql = "DROP TABLE " + data.table_name;
+                this.connection.query(dropSql).then(res => {
+                    this.connection.query("DELETE FROM  migrations WHERE id = '"  + rollingBackId + "' ").then(res => {
+                        console.log('OK!');
+
+                    }).catch(err1 => {
+                        console.log(err1)
+                    });
+                }).catch(err2 => {
+                    console.log(err2)
+                })
+            }
+        })
+
+    }
 
 }
 
-}

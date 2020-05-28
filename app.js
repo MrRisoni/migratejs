@@ -36,9 +36,9 @@ else if (process.argv[2].indexOf('AddReference') >-1) {
 else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }
-/*
+
 if (process.argv[2] === 'rollback') {
-    app_flow.newSeed(process.argv[3])
+    migr.rollback();
 }
 
-*/
+
