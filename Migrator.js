@@ -213,17 +213,17 @@ module.exports = class Migrator {
                     let prefix = data.prefix + '_';
 
                     console.log(data);
-                    let pKey = prefix + 'id ';
-                    let columnsSQL = [pKey +  data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
+                    let pKey = prefix + 'id';
+                    let columnsSQL = ["`" + pKey +"`  " +  data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
                     data.columns.forEach((item, i) => {
                         columnsSQL.push(this.makeColumnSQL(item, prefix));
                     });
 
                     if (data.created_at) {
-                        columnsSQL.push(prefix + "created_at DATETIME")
+                        columnsSQL.push("`" + prefix + "created_at` DATETIME")
                     }
                     if (data.updated_at) {
-                        columnsSQL.push(prefix + "updated_at DATETIME")
+                        columnsSQL.push("`"  + prefix + "updated_at` DATETIME")
                     }
 
                     columnsSQL.push(" PRIMARY KEY ("+ pKey +")")
@@ -234,9 +234,9 @@ module.exports = class Migrator {
                     console.log(createSQL);
                     console.log(res.id + " " + res.fileName)
 
-                    this.connection.query(createSQL).then(
+                    this.connection.query(createSQL).then(success => {
                         this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
-                    );
+                        });
 
 
 
@@ -255,6 +255,9 @@ module.exports = class Migrator {
         switch (col.type) {
             case 'STRING':
                 sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
+                break;
+            case 'INT':
+                sql += " INT ";
                 break;
             case 'TEXT':
                 sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
