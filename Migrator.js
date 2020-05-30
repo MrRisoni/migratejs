@@ -1,9 +1,8 @@
 const moment = require('moment');
-const os = require('os');
 const yaml = require('js-yaml');
 const fs = require('fs');
 const natural = require('natural');
-
+const path = require('path');
 
 var Sequelize = require('sequelize');
 
@@ -147,7 +146,7 @@ module.exports = class Migrator {
     }
 
     insertMigration(fileName) {
-        const query = " INSERT INTO `migrations` (`file_name`,`created_at`) VALUES ('" + fileName + "',NOW())";
+        const query = " INSERT INTO `migrations` (`file_name`,`processed`, `created_at`) VALUES ('" + fileName + "',0, NOW())";
         return this.connection.query(query);
 
     }
@@ -215,7 +214,9 @@ module.exports = class Migrator {
                     if(data.create_index ==1){
                         console.log('creating index');
                         let cols = data.columns.map(col => {return col.title});
-                        let indexSQL= 'CREATE ' + data.type +' INDEX ' + data.name + ' ON ' + data.table.toLowerCase();
+                        let to_table = this.nlpTable(data.table)
+
+                        let indexSQL= 'CREATE ' + data.type +' INDEX ' + data.name + ' ON ' + to_table;
                         indexSQL +=  ' ( ' + cols.join(',') + ')'
                         console.log(indexSQL)
                         this.connection.query(indexSQL).then(success => {
@@ -343,7 +344,7 @@ module.exports = class Migrator {
 
     rollback() {
         // only for create table now
-        console.log('Rooback qery');
+        console.log('Rollback qery');
         this.MigrationModel.findAll({
             where: {
                 processed: 1
@@ -373,9 +374,65 @@ module.exports = class Migrator {
                     console.log(err2)
                 })
             }
+            else if (data.create_index == 1) {
+                const dropSql = " DROP INDEX " + data.name + " ON " +  this.nlpTable(data.table);
+                this.deleteMigration(dropSql,rollingBackId)
+
+            }
         })
 
     }
 
+
+    nlpTable(model_name)
+    {
+        var nounInflector = new natural.NounInflector();
+        return  nounInflector.pluralize(model_name).toLowerCase();
+    }
+
+    deleteMigration(dropSql,rollingBackId)
+    {
+        return new Promise((resolve,reject) => {
+            this.connection.query(dropSql).then(res1 => {
+                this.connection.query("DELETE FROM  migrations WHERE id = '" + rollingBackId + "' ").then(res2 => {
+                    console.log('OK!');
+                    resolve();
+                }).catch(err1 => {
+                    console.log(err1)
+                    reject();
+                });
+            }).catch(err2 => {
+                console.log(err2)
+                reject();
+            });
+        });
+
+    }
+
+
+    undoRollback()
+    {
+        //get the list of migration files
+        // get migration names from db
+        // diff
+        // insert diff to db
+        // migrate
+
+        // or just get the last file
+        const self = this;
+        const directoryPath = path.join(__dirname, 'migrations');
+        fs.readdir(directoryPath, function (err, files) {
+             const noyml = files.map(fil => {
+                 return fil.replace('.yaml','');
+             })
+            const lastMigration = noyml.pop();
+            console.log(lastMigration);
+
+            self.insertMigration(lastMigration).then(foo => {
+                self.executeMigrations();
+            })
+
+        });
+    }
 }
 
