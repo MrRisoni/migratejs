@@ -49,7 +49,15 @@ else if (process.argv[2].indexOf('AddColumns') >-1) {
 else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }
-
+else if (process.argv[2].indexOf('RenameColumn') >-1) {
+    var rest_args = [];
+    process.argv.forEach((arg,idx) => {
+        if (idx>1) {
+            rest_args.push(arg)
+        }
+    });
+    migr.renameColumn(rest_args)
+}
 else if (process.argv[2] === 'rollback') {
     migr.rollback();
 }

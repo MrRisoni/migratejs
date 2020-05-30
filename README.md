@@ -29,3 +29,5 @@ columns:
 
 
 node app AddColumnsToUser email:string passwd:string
+
+node app RenameColumnInusers passwd:hash_passwd
