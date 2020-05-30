@@ -242,7 +242,15 @@ module.exports = class Migrator {
           console.log(data);
           const to_table = data.table_name;
 
-          if (data.remove_columns == 1) {
+          if (data.drop_tables) {
+            console.log("Dropping table");
+            const dropSQL = "DROP  TABLE " + data.tables[0];
+            console.log(dropSQL);
+
+            this.connection.query(dropSQL).then(success => {
+              this.update(res.fileName);
+            });
+          } else if (data.remove_columns == 1) {
             console.log(" rename cols ");
 
             const changeSQL =
