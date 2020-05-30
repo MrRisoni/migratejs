@@ -1,0 +1,8 @@
+create_index: 1
+table: Ticket
+name: 'unique_tkt_kombo'
+type: UNIQUE
+columns:
+  - title: tkt_bookingId
+  - title: tkt_pnr
+  - title: tkt_ticket_no

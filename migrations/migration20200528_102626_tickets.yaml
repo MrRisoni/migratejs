@@ -1,0 +1,16 @@
+create_table: 1
+prefix: tkt
+name: migration20200528_102626_tickets
+table_name: tickets
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: bookingId
+    type: INT
+  - title: pnr
+    type: STRING
+  - title: ticket_no
+    type: STRING

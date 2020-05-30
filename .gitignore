@@ -21,8 +21,4 @@ yarn-error.log*
 *.mp3
 *.log
 *.env
-seeds/*.js
-migrations/*.js
 .env.yml
-migrations/*.yml
-/migrations

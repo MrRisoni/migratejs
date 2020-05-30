@@ -1,0 +1,11 @@
+create_table: 1
+prefix: usr
+table_name: users
+id:
+  type: mediumint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: name
+    type: STRING
