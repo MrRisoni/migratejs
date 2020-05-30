@@ -240,7 +240,39 @@ module.exports = class Migrator {
           let data = yaml.safeLoad(fileContents);
           let prefix = data.prefix + "_";
           console.log(data);
-          if (data.add_colums) {
+          const to_table = data.table_name;
+
+          if (data.rename_columns == 1) {
+            console.log(" rename cols ");
+
+            this.connection
+              .query("SHOW COLUMNS FROM " + to_table)
+              .then(cols => {
+                console.log(cols[0]);
+                let colObj = cols[0].filter(clitm => {
+                  return clitm.Field == data.columns[0].from;
+                });
+                console.log("Col obj");
+                console.log(colObj);
+                const changeSQL =
+                  "ALTER TABLE " +
+                  to_table +
+                  " CHANGE " +
+                  data.columns[0].from +
+                  " " +
+                  data.columns[0].to +
+                  " " +
+                  colObj[0].Type;
+
+                console.log(changeSQL);
+                this.connection.query(changeSQL).then(success => {
+                  this.update(res.fileName);
+                });
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          } else if (data.add_colums) {
             const to_table = data.table_name;
             // get prefix
             console.log("Add Cols");
@@ -549,7 +581,7 @@ module.exports = class Migrator {
     let cols = [];
     const colstart = 1;
     let yamlData = {
-      rename_colums: 1,
+      rename_columns: 1,
       name: migrName,
       table_name: to_table,
       columns: []
