@@ -335,6 +335,7 @@ module.exports = class Migrator {
           } else if (data.create_table == 1) {
             console.log(data);
             let pKey = prefix + "id";
+            let pKeysList = [pKey];
             let columnsSQL = [
               "`" +
                 pKey +
@@ -343,6 +344,9 @@ module.exports = class Migrator {
                 " AUTO_INCREMENT "
             ];
             data.columns.forEach((item, i) => {
+              if (item.primary) {
+                pKeysList.push(prefix + item.title);
+              }
               columnsSQL.push(this.makeColumnSQL(item, prefix));
             });
 
@@ -353,7 +357,7 @@ module.exports = class Migrator {
               columnsSQL.push("`" + prefix + "updated_at` DATETIME");
             }
 
-            columnsSQL.push(" PRIMARY KEY (" + pKey + ")");
+            columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
 
             let createSQL =
               " CREATE TABLE " +

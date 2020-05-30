@@ -1,10 +1,9 @@
 A ridiculous attempt
-to make an migration tool 
+to make an migration tool
 
 Example
 
 Create table
-
 
 node app.js g model User --prefix=usr name:string email:string passwd:string
 
@@ -27,6 +26,25 @@ columns:
 
 ```
 
+Multile primary keys
+
+```
+create_table: 1
+prefix: art
+name: migration20200530_010955_articles
+table_name: articles
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: title
+    type: STRING
+  - title: langid
+    type: INT
+    primary:true
+```
 
 node app AddColumnsToUser email:string passwd:string
 
