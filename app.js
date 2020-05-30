@@ -1,19 +1,9 @@
-const moment = require("moment");
-const Migrator = require("./Migrator");
-
+import Migrator from './Migrator'
 // $ ./node_modules/@babel/node/bin/babel-node.js app.js
-
-const stamp = moment().format("YYYYMMDD_hhmmss");
 
 const migr = new Migrator("./.env.yml");
 let chosenDb = "development";
 
-/*
-if ( process.argv.length ===5) {
-    chosenDb = process.argv[4];
-}
-console.log(chosenDb);
-*/
 migr.setUpDB(chosenDb);
 
 console.log("log args");

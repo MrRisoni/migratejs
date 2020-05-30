@@ -1,12 +1,11 @@
-const moment = require("moment");
-const yaml = require("js-yaml");
-const fs = require("fs");
-const natural = require("natural");
-const path = require("path");
+import moment from 'moment';
+import yaml from 'js-yaml';
+import fs from 'fs';
+import path from 'path';
+import Sequelize from 'sequelize';
 
-var Sequelize = require("sequelize");
 
-module.exports = class Migrator {
+export default class Migrator {
   constructor(ymlConfig) {
     this.dbg = true;
     this.connection = null;

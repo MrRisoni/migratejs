@@ -5,7 +5,7 @@ Example
 
 Create table
 
-node app.js g model User --prefix=usr name:string email:string passwd:string
+./node_modules/@babel/node/bin/babel-node.js app.js g model User --prefix=usr name:string email:string passwd:string
 
 ```
 create_table: 1
