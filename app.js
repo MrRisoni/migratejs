@@ -59,6 +59,14 @@ if (process.argv[2] === "g" && process.argv[3] === "model") {
     }
   });
   migr.removeColumn(rest_args);
+} else if (process.argv[2] === "DropTables") {
+  var rest_args = [];
+  process.argv.forEach((arg, idx) => {
+    if (idx > 2) {
+      rest_args.push(arg);
+    }
+  });
+  migr.dropTables(rest_args);
 } else if (process.argv[2] === "rollback") {
   migr.rollback();
 } else if (process.argv[2] === "undorollback") {

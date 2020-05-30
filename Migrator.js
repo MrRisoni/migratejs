@@ -583,6 +583,20 @@ module.exports = class Migrator {
     });
   }
 
+  dropTables(data) {
+    const migrName = this.getNewMigrationFileName("DropTables" + data[0]);
+    console.log("DATA");
+    console.log(data);
+    let yamlData = {
+      drop_tables: 1,
+      name: migrName,
+      tables: data
+    };
+
+    console.log(yamlData);
+    this.registerMigration(migrName, yaml.safeDump(yamlData));
+  }
+
   removeColumn(data) {
     const migrName = this.getNewMigrationFileName(data[0]);
     console.log("DATA");

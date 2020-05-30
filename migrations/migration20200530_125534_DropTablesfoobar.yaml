@@ -1,0 +1,4 @@
+drop_tables: 1
+name: migration20200530_125534_DropTablesfoobar
+tables:
+  - foobar
