@@ -151,8 +151,8 @@ module.exports = class Migrator {
     }
 
     update(migrationFile) {
-        this.connection.query("UPDATE migrations SET processed = 1, " +
-            " updated_at = NOW() WHERE file_name = '" + migrationFile + "' ").spread((results, metadata) => {
+        this.connection.query("UPDATE migrations SET processed = 1 " +
+            " WHERE file_name = '" + migrationFile + "' ").spread((results, metadata) => {
         });
     }
 
@@ -210,7 +210,31 @@ module.exports = class Migrator {
                     let data = yaml.safeLoad(fileContents);
                     let prefix = data.prefix + '_';
                     console.log(data)
-                    if (data.create_index == 1) {
+                    if (data.add_colums) {
+                        const to_table = data.table_name;
+                        // get prefix
+                        console.log('Add Cols');
+                        this.connection.query("SHOW COLUMNS FROM " + to_table).then(cols => {
+                            const first_col = cols[0][0].Field;
+                            let prfx = first_col.split('_')[0];
+                            if (prfx.length > 0) {
+                                prfx += '_';
+                            }
+                            console.log(prfx);
+                            let columnsSQL = [];
+                            data.columns.forEach((item, i) => {
+                                columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
+                            });
+                            console.log(columnsSQL);
+
+                            let alterSQL = ' ALTER TABLE ' + to_table + '  ' + columnsSQL.join(',')
+                            console.log(alterSQL)
+                            this.connection.query(alterSQL).then(success => {
+                                this.update(res.fileName)
+                            });
+                        });
+
+                    } else if (data.create_index == 1) {
                         console.log('creating index');
                         let cols = data.columns.map(col => {
                             return col.title
@@ -223,8 +247,7 @@ module.exports = class Migrator {
                         this.connection.query(indexSQL).then(success => {
                             this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
                         });
-                    }
-                    if (data.create_table == 1) {
+                    } else if (data.create_table == 1) {
                         console.log(data);
                         let pKey = prefix + 'id';
                         let columnsSQL = ["`" + pKey + "`  " + data['id']['type'].toUpperCase() + ' AUTO_INCREMENT '];
@@ -262,7 +285,7 @@ module.exports = class Migrator {
     }
 
 
-    makeColumnSQL(col, prefix) {
+    makeColumnSQL(col, prefix, add = 0) {
         let sql = "`" + prefix + col.title + "`"
 
         switch (col.type) {
@@ -289,7 +312,9 @@ module.exports = class Migrator {
             default:
                 sql = '';
         }
-
+        if (add === 1) {
+            sql = ' ADD COLUMN ' + sql
+        }
         return sql
     }
 
@@ -458,7 +483,7 @@ module.exports = class Migrator {
         let to_table = data[0].replace('AddColumnsTo', '');
         let cols = [];
         const colstart = 1;
-        let yamlData = {add_colums: 1, name: migrName, table: to_table, columns: []}
+        let yamlData = {add_colums: 1, name: migrName, table_name: to_table, columns: []}
 
         for (var col = colstart; col < data.length; col++) {
             var col_data = data[col].split(':');
