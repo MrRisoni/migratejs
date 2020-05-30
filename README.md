@@ -26,3 +26,6 @@ columns:
     type: STRING
 
 ```
+
+
+node app AddColumnsToUser email:string passwd:string

@@ -123,7 +123,7 @@ module.exports = class Migrator {
 
         let yamlStr = yaml.safeDump(yamlData);
 
-        this.promiseFSWrite({filename: migrationName, contents: yamlStr}).then(resWrite => {
+        this.writeMigrationFile({filename: migrationName, contents: yamlStr}).then(resWrite => {
             console.log(resWrite);
             self.insertMigration(migrationName).then(resDB => {
                 process.exit();
@@ -133,9 +133,8 @@ module.exports = class Migrator {
 
     }
 
-    promiseFSWrite(args) {
+    writeMigrationFile(args) {
         return new Promise((resolve, reject) => {
-
             fs.writeFile("migrations/" + args.filename + ".yaml", args.contents, err => {
                 if (err) {
                     reject('Error writing file ' + err);
@@ -211,13 +210,15 @@ module.exports = class Migrator {
                     let data = yaml.safeLoad(fileContents);
                     let prefix = data.prefix + '_';
                     console.log(data)
-                    if(data.create_index ==1){
+                    if (data.create_index == 1) {
                         console.log('creating index');
-                        let cols = data.columns.map(col => {return col.title});
+                        let cols = data.columns.map(col => {
+                            return col.title
+                        });
                         let to_table = this.nlpTable(data.table)
 
-                        let indexSQL= 'CREATE ' + data.type +' INDEX ' + data.name + ' ON ' + to_table;
-                        indexSQL +=  ' ( ' + cols.join(',') + ')'
+                        let indexSQL = 'CREATE ' + data.type + ' INDEX ' + data.name + ' ON ' + to_table;
+                        indexSQL += ' ( ' + cols.join(',') + ')'
                         console.log(indexSQL)
                         this.connection.query(indexSQL).then(success => {
                             this.connection.query("UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' ")
@@ -292,6 +293,24 @@ module.exports = class Migrator {
         return sql
     }
 
+    getNewMigrationFileName(ref) {
+        const stamp = moment().format('YYYYMMDD_hhmmss');
+        return 'migration' + stamp + '_' + ref;
+    }
+
+    registerMigration(migrationName, yamlStr) {
+        const self = this;
+        this.writeMigrationFile({filename: migrationName, contents: yamlStr}).then(resWrite => {
+            console.log(resWrite);
+            self.insertMigration(migrationName).then(resDB => {
+                process.exit();
+            }).catch(errDB => console.log(errDB));
+
+        }).catch(errWrite => console.log(errWrite));
+
+    }
+
+
     newIndex(ref) {
         // AddReferenceXTo
         const self = this;
@@ -304,7 +323,7 @@ module.exports = class Migrator {
         const yamlData = {create_index: 1, table: to_table, name: '', type: "UNIQUE", columns: [{title: 'ColA'}]}
         let yamlStr = yaml.safeDump(yamlData);
 
-        this.promiseFSWrite({filename: migrationName, contents: yamlStr}).then(resWrite => {
+        this.writeMigrationFile({filename: migrationName, contents: yamlStr}).then(resWrite => {
             console.log(resWrite);
             self.insertMigration(migrationName).then(resDB => {
                 process.exit();
@@ -373,10 +392,9 @@ module.exports = class Migrator {
                 }).catch(err2 => {
                     console.log(err2)
                 })
-            }
-            else if (data.create_index == 1) {
-                const dropSql = " DROP INDEX " + data.name + " ON " +  this.nlpTable(data.table);
-                this.deleteMigration(dropSql,rollingBackId)
+            } else if (data.create_index == 1) {
+                const dropSql = " DROP INDEX " + data.name + " ON " + this.nlpTable(data.table);
+                this.deleteMigration(dropSql, rollingBackId)
 
             }
         })
@@ -384,15 +402,13 @@ module.exports = class Migrator {
     }
 
 
-    nlpTable(model_name)
-    {
+    nlpTable(model_name) {
         var nounInflector = new natural.NounInflector();
-        return  nounInflector.pluralize(model_name).toLowerCase();
+        return nounInflector.pluralize(model_name).toLowerCase();
     }
 
-    deleteMigration(dropSql,rollingBackId)
-    {
-        return new Promise((resolve,reject) => {
+    deleteMigration(dropSql, rollingBackId) {
+        return new Promise((resolve, reject) => {
             this.connection.query(dropSql).then(res1 => {
                 this.connection.query("DELETE FROM  migrations WHERE id = '" + rollingBackId + "' ").then(res2 => {
                     console.log('OK!');
@@ -410,8 +426,7 @@ module.exports = class Migrator {
     }
 
 
-    undoRollback()
-    {
+    undoRollback() {
         //get the list of migration files
         // get migration names from db
         // diff
@@ -422,9 +437,9 @@ module.exports = class Migrator {
         const self = this;
         const directoryPath = path.join(__dirname, 'migrations');
         fs.readdir(directoryPath, function (err, files) {
-             const noyml = files.map(fil => {
-                 return fil.replace('.yaml','');
-             })
+            const noyml = files.map(fil => {
+                return fil.replace('.yaml', '');
+            })
             const lastMigration = noyml.pop();
             console.log(lastMigration);
 
@@ -434,5 +449,29 @@ module.exports = class Migrator {
 
         });
     }
+
+
+    newColumns(data) {
+        const migrName = this.getNewMigrationFileName(data[0]);
+        console.log('DATA');
+        console.log(data);
+        let to_table = data[0].replace('AddColumnsTo', '');
+        let cols = [];
+        const colstart = 1;
+        let yamlData = {add_colums: 1, name: migrName, table: to_table, columns: []}
+
+        for (var col = colstart; col < data.length; col++) {
+            var col_data = data[col].split(':');
+            console.log(data[col]);
+            var col_type = col_data[1].toUpperCase();
+            if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
+                // oops type not  supported
+            }
+
+            yamlData.columns.push({title: col_data[0], type: col_type})
+        }
+        this.registerMigration(migrName, yaml.safeDump(yamlData));
+    }
+
 }
 

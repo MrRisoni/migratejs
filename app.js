@@ -37,6 +37,15 @@ else if (process.argv[2].indexOf('AddIndex') >-1) {
     console.log('Creating index');
     migr.newIndex(process.argv[2])
 }
+else if (process.argv[2].indexOf('AddColumns') >-1) {
+    var rest_args = [];
+    process.argv.forEach((arg,idx) => {
+        if (idx>1) {
+            rest_args.push(arg)
+        }
+    });
+    migr.newColumns(rest_args)
+}
 else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }

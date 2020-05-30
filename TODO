@@ -5,3 +5,6 @@ multiple primary keys
 Add Column  | Rollback
 Rename Column  | Rollback
 Remove Column  | Rollback
+
+
+NO NLP
