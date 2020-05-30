@@ -573,6 +573,27 @@ module.exports = class Migrator {
     });
   }
 
+  removeColumn(data) {
+    const migrName = this.getNewMigrationFileName(data[0]);
+    console.log("DATA");
+    console.log(data);
+    let to_table = data[0].replace("RemoveColumnsFrom", "");
+    let cols = [];
+    const colstart = 1;
+    let yamlData = {
+      remove_columns: 1,
+      name: migrName,
+      table_name: to_table,
+      columns: []
+    };
+
+    for (var col = colstart; col < data.length; col++) {
+      yamlData.columns.push(data[col]);
+    }
+
+    this.registerMigration(migrName, yaml.safeDump(yamlData));
+  }
+
   renameColumn(data) {
     const migrName = this.getNewMigrationFileName(data[0]);
     console.log("DATA");
