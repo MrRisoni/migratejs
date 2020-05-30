@@ -22,3 +22,4 @@ yarn-error.log*
 *.log
 *.env
 .env.yml
+*.swp
