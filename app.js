@@ -41,8 +41,11 @@ else if (process.argv[2] === 'migrate') {
     migr.executeMigrations();
 }
 
-if (process.argv[2] === 'rollback') {
+else if (process.argv[2] === 'rollback') {
     migr.rollback();
+}
+else if (process.argv[2] === 'undorollback') {
+    migr.undoRollback();
 }
 
 
