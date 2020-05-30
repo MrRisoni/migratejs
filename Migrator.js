@@ -96,9 +96,8 @@ export default class Migrator {
   newMigration(args) {
     console.log("migration args");
     console.log(args);
-    var nounInflector = new natural.NounInflector();
 
-    let model_name = nounInflector.pluralize(args[0]).toLowerCase();
+    let model_name = args[0];
 
     const stamp = moment().format("YYYYMMDD_hhmmss");
     const self = this;
