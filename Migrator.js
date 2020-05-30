@@ -109,7 +109,7 @@ export default class Migrator {
     if (args[1].indexOf("--prefix") > -1) {
       colstart = 2;
       console.log(args[1]);
-      var tmp = args[1].split("=");
+      let tmp = args[1].split("=");
       prfx = tmp[1];
     }
 
@@ -124,9 +124,9 @@ export default class Migrator {
       columns: []
     };
 
-    for (var col = colstart; col < args.length; col++) {
-      var col_data = args[col].split(":");
-      var col_type = col_data[1].toUpperCase();
+    for (let col = colstart; col < args.length; col++) {
+      let col_data = args[col].split(":");
+      let col_type = col_data[1].toUpperCase();
       if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
         // oops type not  supported
       }
@@ -248,7 +248,7 @@ export default class Migrator {
             this.connection.query(dropSQL).then(success => {
               this.update(res.fileName);
             });
-          } else if (data.remove_columns == 1) {
+          } else if (data.remove_columns === 1) {
             console.log(" rename cols ");
 
             const changeSQL =
@@ -258,7 +258,7 @@ export default class Migrator {
             this.connection.query(changeSQL).then(success => {
               this.update(res.fileName);
             });
-          } else if (data.rename_columns == 1) {
+          } else if (data.rename_columns === 1) {
             console.log(" rename cols ");
 
             this.connection
@@ -266,7 +266,7 @@ export default class Migrator {
               .then(cols => {
                 console.log(cols[0]);
                 let colObj = cols[0].filter(clitm => {
-                  return clitm.Field == data.columns[0].from;
+                  return clitm.Field === data.columns[0].from;
                 });
                 console.log("Col obj");
                 console.log(colObj);
@@ -314,7 +314,7 @@ export default class Migrator {
                   this.update(res.fileName);
                 });
               });
-          } else if (data.create_index == 1) {
+          } else if (data.create_index === 1) {
             console.log("creating index");
             let cols = data.columns.map(col => {
               return col.title;
@@ -330,7 +330,7 @@ export default class Migrator {
                 "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
               );
             });
-          } else if (data.create_table == 1) {
+          } else if (data.create_table === 1) {
             console.log(data);
             let pKey = prefix + "id";
             let pKeysList = [pKey];
@@ -480,8 +480,8 @@ export default class Migrator {
     let to_table = data[1];
     let ref_col = "";
 
-    var natural = require("natural");
-    var nounInflector = new natural.NounInflector();
+    let natural = require("natural");
+    let nounInflector = new natural.NounInflector();
     console.log(nounInflector.pluralize("radius"));
 
     console.log(from_table + " " + to_table + ref_col);
@@ -513,7 +513,7 @@ export default class Migrator {
         "utf8"
       );
       let data = yaml.safeLoad(fileContents);
-      if (data.create_table == 1) {
+      if (data.create_table === 1) {
         const dropSql = "DROP TABLE " + data.table_name;
         this.connection
           .query(dropSql)
@@ -532,7 +532,7 @@ export default class Migrator {
           .catch(err2 => {
             console.log(err2);
           });
-      } else if (data.create_index == 1) {
+      } else if (data.create_index === 1) {
         const dropSql =
           " DROP INDEX " + data.name + " ON " + this.nlpTable(data.table);
         this.deleteMigration(dropSql, rollingBackId);
@@ -541,7 +541,7 @@ export default class Migrator {
   }
 
   nlpTable(model_name) {
-    var nounInflector = new natural.NounInflector();
+    let nounInflector = new natural.NounInflector();
     return nounInflector.pluralize(model_name).toLowerCase();
   }
 
@@ -621,7 +621,7 @@ export default class Migrator {
       columns: []
     };
 
-    for (var col = colstart; col < data.length; col++) {
+    for (let col = colstart; col < data.length; col++) {
       yamlData.columns.push(data[col]);
     }
 
@@ -642,8 +642,8 @@ export default class Migrator {
       columns: []
     };
 
-    for (var col = colstart; col < data.length; col++) {
-      var col_data = data[col].split(":");
+    for (let col = colstart; col < data.length; col++) {
+      let col_data = data[col].split(":");
 
       yamlData.columns.push({ from: col_data[0], to: col_data[1] });
     }
@@ -665,10 +665,10 @@ export default class Migrator {
       columns: []
     };
 
-    for (var col = colstart; col < data.length; col++) {
-      var col_data = data[col].split(":");
+    for (let col = colstart; col < data.length; col++) {
+      let col_data = data[col].split(":");
       console.log(data[col]);
-      var col_type = col_data[1].toUpperCase();
+      let col_type = col_data[1].toUpperCase();
       if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
         // oops type not  supported
       }
