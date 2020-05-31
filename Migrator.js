@@ -1,9 +1,8 @@
-import moment from 'moment';
-import yaml from 'js-yaml';
-import fs from 'fs';
-import path from 'path';
-import Sequelize from 'sequelize';
-
+import moment from "moment";
+import yaml from "js-yaml";
+import fs from "fs";
+import path from "path";
+import Sequelize from "sequelize";
 
 export default class Migrator {
   constructor(ymlConfig) {
@@ -40,7 +39,10 @@ export default class Migrator {
         settings[dbOption].pass,
         {
           host: settings[dbOption].host,
-          dialect: "mysql",
+          dialect: "postgres",
+          dialectOptions: {
+            ssl: true
+          },
           define: {
             charset: "utf8",
             collate: "utf8_general_ci",
@@ -677,4 +679,4 @@ export default class Migrator {
     }
     this.registerMigration(migrName, yaml.safeDump(yamlData));
   }
-};
+}

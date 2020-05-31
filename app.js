@@ -1,8 +1,8 @@
-import Migrator from './Migrator'
+import Migrator from "./Migrator";
 // $ ./node_modules/@babel/node/bin/babel-node.js app.js
 
 const migr = new Migrator("./.env.yml");
-let chosenDb = "development";
+let chosenDb = "test";
 
 migr.setUpDB(chosenDb);
 
