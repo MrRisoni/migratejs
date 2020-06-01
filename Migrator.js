@@ -4,9 +4,12 @@ import fs from "fs";
 import path from "path";
 import Sequelize from "sequelize";
 
+
 export default class Migrator {
   constructor(ymlConfig) {
     this.dbg = true;
+    this.migrations_path = "postgres_migrations";
+
     this.connection = null;
     this.MigrationModel = null;
     this.yamlConfigFile = ymlConfig;
@@ -41,7 +44,7 @@ export default class Migrator {
           host: settings[dbOption].host,
           dialect: "postgres",
           dialectOptions: {
-            ssl: true
+            ssl: false
           },
           define: {
             charset: "utf8",
@@ -80,9 +83,15 @@ export default class Migrator {
             type: Sequelize.CHAR,
             field: "file_name"
           },
-          processes: {
+          processed: {
             type: Sequelize.INTEGER.UNSIGNED,
-            field: "processed"
+            field: "processed",
+            defaultValue:0
+          },
+          createdAt: {
+            type: Sequelize.INTEGER.DATE,
+            field: "created_at",
+            defaultValue:Sequelize.NOW
           }
         },
         {
@@ -155,7 +164,7 @@ export default class Migrator {
   writeMigrationFile(args) {
     return new Promise((resolve, reject) => {
       fs.writeFile(
-        "migrations/" + args.filename + ".yaml",
+        this.migrations_path + "/" + args.filename + ".yaml",
         args.contents,
         err => {
           if (err) {
@@ -168,11 +177,13 @@ export default class Migrator {
   }
 
   insertMigration(fileName) {
-    const query =
-      " INSERT INTO `migrations` (`file_name`,`processed`, `created_at`) VALUES ('" +
-      fileName +
-      "',0, NOW())";
+    const query = " INSERT INTO migrations (file_name) VALUES ('" + fileName + "')";
     return this.connection.query(query);
+   // console.log('inserting ' + fileName)
+    //const self = this;
+
+  //  self.MigrationModel.build({fileName:fileName}).save().then(console.log('inserted migr')).catch(err => console.log(err));
+
   }
 
   update(migrationFile) {
@@ -223,10 +234,10 @@ export default class Migrator {
 
   executeMigrations() {
     const self = this;
-
+    console.log('Executing migrations')
     self.MigrationModel.findAll({
       where: {
-        processed: 0
+        processed: false
       },
       order: [["created_at", "ASC"]]
     }).then(results => {
@@ -234,7 +245,7 @@ export default class Migrator {
         results.forEach(res => {
           console.log(res.fileName);
           let fileContents = fs.readFileSync(
-            `./migrations/${res.fileName}.yaml`,
+            `./${this.migrations_path}/${res.fileName}.yaml`,
             "utf8"
           );
           let data = yaml.safeLoad(fileContents);
@@ -329,7 +340,7 @@ export default class Migrator {
             console.log(indexSQL);
             this.connection.query(indexSQL).then(success => {
               this.connection.query(
-                "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
+                "UPDATE `migrations` SET processed=1 WHERE id = '" + res.id + "' "
               );
             });
           } else if (data.create_table === 1) {
@@ -371,7 +382,7 @@ export default class Migrator {
 
             this.connection.query(createSQL).then(success => {
               this.connection.query(
-                "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
+                "UPDATE `migrations` SET processed=1 WHERE id = '" + res.id + "' "
               );
             });
           }
@@ -522,7 +533,7 @@ export default class Migrator {
           .then(res => {
             this.connection
               .query(
-                "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
+                "DELETE FROM  `migrations` WHERE id = '" + rollingBackId + "' "
               )
               .then(res => {
                 console.log("OK!");
@@ -554,7 +565,7 @@ export default class Migrator {
         .then(res1 => {
           this.connection
             .query(
-              "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
+              "DELETE FROM  `migrations` WHERE id = '" + rollingBackId + "' "
             )
             .then(res2 => {
               console.log("OK!");
@@ -581,7 +592,7 @@ export default class Migrator {
 
     // or just get the last file
     const self = this;
-    const directoryPath = path.join(__dirname, "migrations");
+    const directoryPath = path.join(__dirname, this.migrations_path);
     fs.readdir(directoryPath, function(err, files) {
       const noyml = files.map(fil => {
         return fil.replace(".yaml", "");
