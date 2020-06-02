@@ -4,17 +4,17 @@ const migr = new Migrator("./.env.yml");
 let chosenDb = "development";
 
 migr.setUpDB(chosenDb);
-
+var rest_args = [];
 console.log("log args");
 console.log(process.argv);
 if (process.argv[2].indexOf("CreateTable") > -1) {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            // return arg;
-            rest_args.push(arg);
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
     migr.newTable(rest_args);
 } else if (process.argv[2].indexOf("AddReference") > -1) {
     console.log("Creating index");
@@ -27,12 +27,6 @@ if (process.argv[2].indexOf("CreateTable") > -1) {
     migr.newIndex(process.argv[2]);
 } else if (process.argv[2].indexOf("RemoveIndexFrom") > -1) {
     console.log("Removing index");
-    var rest_args = [];
-   /* process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            rest_args.push(arg);
-        }
-    }); */
     rest_args = process.argv.map((arg, idx) => {
         if (idx >1) {
             return arg;
@@ -43,46 +37,52 @@ if (process.argv[2].indexOf("CreateTable") > -1) {
     migr.removeIndex(rest_args);
 }
 else if (process.argv[2].indexOf("AddColumns") > -1) {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            rest_args.push(arg);
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
     migr.newColumns(rest_args);
 } else if (process.argv[2] === "migrate") {
     migr.executeMigrations();
 } else if (process.argv[2].indexOf("RenameColumn") > -1) {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            rest_args.push(arg);
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
     migr.renameColumn(rest_args);
 } else if (process.argv[2].indexOf("ChangeType") > -1) {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            rest_args.push(arg);
+    var  rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
     migr.changeColumnType(rest_args);
 } else if (process.argv[2].indexOf("RemoveColumns") > -1) {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 1) {
-            rest_args.push(arg);
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
     migr.removeColumn(rest_args);
 } else if (process.argv[2] === "DropTables") {
-    var rest_args = [];
-    process.argv.forEach((arg, idx) => {
-        if (idx > 2) {
-            rest_args.push(arg);
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >2) {
+            return arg;
         }
-    });
+    }).filter(arj => {
+        return arj!== undefined;
+    })
+
     migr.dropTables(rest_args);
 } else if (process.argv[2] === "rollback") {
     migr.rollback();

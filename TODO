@@ -5,4 +5,3 @@ float
 double
 varchar charset
 
-app.js forEach => map
