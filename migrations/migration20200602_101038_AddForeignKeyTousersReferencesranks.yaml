@@ -1,0 +1,10 @@
+create_fkey: 1
+name: migration20200602_101038_AddForeignKeyTousersReferencesranks
+table: users
+fkey_constaintName : foo
+referenceTable: ranks
+onDelete: CASCADE
+onUpdate: CASCADE
+fkey_column_name: usr_ranks_id
+fkey_type: tinyint
+referenceCol: rnk_id

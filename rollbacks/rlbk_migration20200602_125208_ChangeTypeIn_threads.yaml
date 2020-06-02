@@ -1,0 +1,5 @@
+change_column_type: 1
+name: rlbk_migration20200602_125208_ChangeTypeIn_threads
+table_name: threads
+title: thrd_downvotes
+was: date

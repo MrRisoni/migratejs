@@ -17,10 +17,12 @@ yarn-debug.log*
 yarn-error.log*
 /.idea
 *.xml
+/bower_components
+*.mp3
 *.log
 *.env
 .env.yml
 *.swp
-migrations_path/
-migrations/
-*.yaml
+*.sh
+bash_*
+bash_create_table.sh
