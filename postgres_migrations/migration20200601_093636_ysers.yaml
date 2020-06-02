@@ -1,10 +1,11 @@
 create_table: 1
 prefix: usr
 name: migration20200601_093636_users
-table_name: usrs
+table_name: ysers
 id:
   type: bigint
   unsigned: true
+  auto_increment: true
 created_at: false
 updated_at: false
 columns:

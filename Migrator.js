@@ -439,12 +439,15 @@ export default class Migrator {
                         let pKey = prefix + "id";
                         let pKeysList = [pKey];
                         let quote = (this.dialect === 'postgres') ? "" : "`";
-                        let AutoIncrement = (this.dialect === 'postgres') ? "" : " AUTO_INCREMENT ";
+                        let AutoIncrement = "";
+                        if (data.id['auto_increment']) {
+                            AutoIncrement = (this.dialect === 'postgres') ? " SERIAL " : data["id"]["type"].toUpperCase() + " AUTO_INCREMENT ";
+                        }
+
                         let columnsSQL = [
                             quote +
                             pKey +
                             quote + " " +
-                            data["id"]["type"].toUpperCase() +
                             AutoIncrement
                         ];
                         data.columns.forEach((item, i) => {
@@ -483,9 +486,7 @@ export default class Migrator {
                         console.log(res.id + " " + res.fileName);
 
                         this.connection.query(createSQL).then(success => {
-                            this.connection.query(
-                                "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
-                            );
+                            this.update(res.fileName)
                         });
                     }
                 });
