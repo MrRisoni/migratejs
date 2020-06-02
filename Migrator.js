@@ -641,7 +641,18 @@ export default class Migrator {
                 "utf8"
             );
             let data = yaml.safeLoad(fileContents);
-            if (data.create_table === 1) {
+            if (data.add_columns ==1) {
+                let prfx = '';
+                this.getPrefixOrigin(data.table_name).then(dt => {
+                   prfx = dt;
+                   console.log('prfx ' + prfx)
+                    console.log()
+                    const dropSQL = "ALTER TABLE " + data.table_name + " DROP COLUMN  " +  prfx + data.columns[0].title;
+                    this.rollBackNotifyDB(dropSQL, rollingBackId)
+                });
+
+            }
+            else if (data.create_table === 1) {
                 const dropSql = "DROP TABLE " + data.table_name;
                 this.connection
                     .query(dropSql)
@@ -666,6 +677,26 @@ export default class Migrator {
                 this.deleteMigration(dropSql, rollingBackId);
             }
         });
+    }
+
+    rollBackNotifyDB(dropSql,rollingBackId){
+        this.connection
+            .query(dropSql)
+            .then(res => {
+                this.connection
+                    .query(
+                        "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
+                    )
+                    .then(res => {
+                        console.log("OK!");
+                    })
+                    .catch(err1 => {
+                        console.log(err1);
+                    });
+            })
+            .catch(err2 => {
+                console.log(err2);
+            });
     }
 
     nlpTable(model_name) {

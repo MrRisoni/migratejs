@@ -26,7 +26,7 @@ if (process.argv[2] === "g" && process.argv[3] === "model") {
 }else if (process.argv[2].indexOf("AddIndex") > -1) {
   console.log("Creating index");
   migr.newIndex(process.argv[2]);
-} else if (process.argv.length >=4 && process.argv[3].indexOf("AddColumns") > -1) {
+} else if (process.argv[2].indexOf("AddColumns") > -1) {
   var rest_args = [];
   process.argv.forEach((arg, idx) => {
     if (idx > 2) {
