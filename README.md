@@ -1,4 +1,4 @@
-A ridiculous attempt
+A funny attempt
 to make an migration tool
 
 Example
@@ -26,7 +26,7 @@ columns:
 
 ```
 
-Multiπle primary keys
+Multiple primary keys
 
 ```
 create_table: 1

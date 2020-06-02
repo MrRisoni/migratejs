@@ -25,3 +25,4 @@ yarn-error.log*
 *.swp
 *.sh
 bash_*
+bash_create_table.sh

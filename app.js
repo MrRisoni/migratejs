@@ -1,5 +1,4 @@
 import Migrator from './Migrator'
-// $ ./node_modules/@babel/node/bin/babel-node.js app.js
 
 const migr = new Migrator("./.env.yml");
 let chosenDb = "development";
@@ -8,15 +7,15 @@ migr.setUpDB(chosenDb);
 
 console.log("log args");
 console.log(process.argv);
-if (process.argv[2] === "g" && process.argv[3] === "model") {
+if (process.argv[2].indexOf("CreateTable") > -1) {
     var rest_args = [];
     process.argv.forEach((arg, idx) => {
-        if (idx > 3) {
+        if (idx > 1) {
             // return arg;
             rest_args.push(arg);
         }
     });
-    migr.newMigration(rest_args);
+    migr.newTable(rest_args);
 } else if (process.argv[2].indexOf("AddReference") > -1) {
     console.log("Creating index");
     migr.newReference(process.argv[2]);

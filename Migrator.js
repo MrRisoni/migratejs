@@ -93,16 +93,16 @@ export default class Migrator {
         }
     }
 
-    newMigration(args) {
+    newTable(args) {
         console.log("migration args");
         console.log(args);
 
-        let model_name = args[0];
+        let model_name = args[0].replace('CreateTable_','');
 
         const stamp = moment().format("YYYYMMDD_hhmmss");
         const self = this;
 
-        const migrationName = "migration" + stamp + "_" + model_name;
+        const migrationName = "migration" + stamp + "_" + args[0];
 
         let prfx = "";
         let colstart = 1;
@@ -118,6 +118,9 @@ export default class Migrator {
             prefix: prfx,
             name: migrationName,
             table_name: model_name,
+            comment: '',
+            charset: 'utf8',
+            engine: 'InnoDB',
             id: {type: "bigint", unsigned: true},
             created_at: true,
             updated_at: true,
@@ -433,7 +436,16 @@ export default class Migrator {
                             data.table_name +
                             " ( " +
                             columnsSQL.join(",") +
-                            ")";
+                            ") ";
+
+                        if (typeof(data.engine!== "undefined")) {
+                            createSQL += " ENGINE =  " + data.engine;
+                        }
+                        if (typeof(data.comment!== "undefined")) {
+                            if (data.comment.length  >0) {
+                                createSQL += " COMMENT '" + data.comment + "'";
+                            }
+                        }
 
                         console.log(createSQL);
                         console.log(res.id + " " + res.fileName);
