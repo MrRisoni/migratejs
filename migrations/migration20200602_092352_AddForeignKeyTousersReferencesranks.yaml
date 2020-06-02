@@ -1,7 +1,0 @@
-create_fkey: 1
-name: migration20200602_092352_AddForeignKeyTousersReferencesranks
-table: users
-referenceTable: ranks
-fkey_column_name: usr_ranks_id
-onDelete: CASCADE
-onUpdate: CASCADE

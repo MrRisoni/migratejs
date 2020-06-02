@@ -232,8 +232,8 @@ export default class Migrator {
         results.forEach(res => {
           console.log(res.fileName);
           let fileContents = fs.readFileSync(
-            `./migrations/${res.fileName}.yaml`,
-            "utf8"
+              `./migrations/${res.fileName}.yaml`,
+              "utf8"
           );
           let data = yaml.safeLoad(fileContents);
           let prefix = data.prefix + "_";
@@ -252,7 +252,7 @@ export default class Migrator {
             console.log(" rename cols ");
 
             const changeSQL =
-              "ALTER TABLE " + to_table + " DROP COLUMN " + data.columns[0];
+                "ALTER TABLE " + to_table + " DROP COLUMN " + data.columns[0];
 
             console.log(changeSQL);
             this.connection.query(changeSQL).then(success => {
@@ -262,58 +262,58 @@ export default class Migrator {
             console.log(" rename cols ");
 
             this.connection
-              .query("SHOW COLUMNS FROM " + to_table)
-              .then(cols => {
-                console.log(cols[0]);
-                let colObj = cols[0].filter(clitm => {
-                  return clitm.Field === data.columns[0].from;
-                });
-                console.log("Col obj");
-                console.log(colObj);
-                const changeSQL =
-                  "ALTER TABLE " +
-                  to_table +
-                  " CHANGE " +
-                  data.columns[0].from +
-                  " " +
-                  data.columns[0].to +
-                  " " +
-                  colObj[0].Type;
+                .query("SHOW COLUMNS FROM " + to_table)
+                .then(cols => {
+                  console.log(cols[0]);
+                  let colObj = cols[0].filter(clitm => {
+                    return clitm.Field === data.columns[0].from;
+                  });
+                  console.log("Col obj");
+                  console.log(colObj);
+                  const changeSQL =
+                      "ALTER TABLE " +
+                      to_table +
+                      " CHANGE " +
+                      data.columns[0].from +
+                      " " +
+                      data.columns[0].to +
+                      " " +
+                      colObj[0].Type;
 
-                console.log(changeSQL);
-                this.connection.query(changeSQL).then(success => {
-                  this.update(res.fileName);
+                  console.log(changeSQL);
+                  this.connection.query(changeSQL).then(success => {
+                    this.update(res.fileName);
+                  });
+                })
+                .catch(err => {
+                  console.log(err);
                 });
-              })
-              .catch(err => {
-                console.log(err);
-              });
-          } else if (data.add_colums) {
+          } else if (data.add_columns) {
             const to_table = data.table_name;
             // get prefix
             console.log("Add Cols");
             this.connection
-              .query("SHOW COLUMNS FROM " + to_table)
-              .then(cols => {
-                const first_col = cols[0][0].Field;
-                let prfx = first_col.split("_")[0];
-                if (prfx.length > 0) {
-                  prfx += "_";
-                }
-                console.log(prfx);
-                let columnsSQL = [];
-                data.columns.forEach((item, i) => {
-                  columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
-                });
-                console.log(columnsSQL);
+                .query("SHOW COLUMNS FROM " + to_table)
+                .then(cols => {
+                  const first_col = cols[0][0].Field;
+                  let prfx = first_col.split("_")[0];
+                  if (prfx.length > 0) {
+                    prfx += "_";
+                  }
+                  console.log(prfx);
+                  let columnsSQL = [];
+                  data.columns.forEach((item, i) => {
+                    columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
+                  });
+                  console.log(columnsSQL);
 
-                let alterSQL =
-                  " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-                console.log(alterSQL);
-                this.connection.query(alterSQL).then(success => {
-                  this.update(res.fileName);
+                  let alterSQL =
+                      " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
+                  console.log(alterSQL);
+                  this.connection.query(alterSQL).then(success => {
+                    this.update(res.fileName);
+                  });
                 });
-              });
           } else if (data.create_index === 1) {
             console.log("creating index");
             let cols = data.columns.map(col => {
@@ -322,15 +322,31 @@ export default class Migrator {
             let to_table = this.nlpTable(data.table);
 
             let indexSQL =
-              "CREATE " + data.type + " INDEX " + data.name + " ON " + to_table;
+                "CREATE " + data.type + " INDEX " + data.name + " ON " + to_table;
             indexSQL += " ( " + cols.join(",") + ")";
             console.log(indexSQL);
             this.connection.query(indexSQL).then(success => {
               this.connection.query(
-                "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
+                  "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
               );
             });
-          } else if (data.create_table === 1) {
+          } else if (data.create_fkey ==1 ) {
+           /* // create new column
+            const addColSQL = "ALTER TABLE " + data.table + " ADD COLUMN " + data.fkey_column_name + " " + data.fkey_type;
+            this.connection.query(addColSQL).then(addColRes => {
+              const addConstaintSQL =  ALTER TABLE Orders
+              ADD FOREIGN KEY (product_category, product_id)
+              REFERENCES product(category, id)
+              ON UPDATE CASCADE ON DELETE RESTRICT
+              this.connection.query(addConstaintSQL).then(addConstrRes => {
+
+              }).catch(err2 => {
+                console.log(err2);
+              });
+            }).catch(err1 => {
+              console.log(err1);
+            }); */
+          }else if (data.create_table === 1) {
             console.log(data);
             let pKey = prefix + "id";
             let pKeysList = [pKey];
@@ -469,12 +485,65 @@ export default class Migrator {
       .catch(errWrite => console.log(errWrite));
   }
 
+  getPrefixOriginAndFkeyData(from_table,to_table){
+      return Promise.all([this.getPrefixOrigin(from_table),this.getFkeyTypeAndName(to_table)]);
+  }
+
+  getPrefixOrigin(from_tbl){
+    const selbst = this;
+    return new Promise((resolve,reject) => {
+      selbst.connection
+          .query("SHOW COLUMNS FROM " + from_tbl , { type: Sequelize.QueryTypes.SELECT})
+          .then(rsl => {
+            // get primary key type and name
+            // console.log(rsl)
+            const pKeyCol = rsl.filter(col => {
+              return col.Key === 'PRI';
+            })[0];
+            const fieldName = pKeyCol.Field;
+            const fieldNameData = fieldName.split('_');
+            let  prfx = '';
+            if (fieldNameData.length >1) {
+              prfx = fieldNameData[0] + '_';
+            }
+            resolve(prfx)
+
+          }).catch(err => {
+        console.log('ERRR fkey  ' + err);
+        reject();
+      })
+    })
+
+  }
+
+  getFkeyTypeAndName(to_tbl)
+  {
+    const selbst = this;
+    return new Promise((resolve,reject) => {
+      selbst.connection
+          .query("SHOW COLUMNS FROM " + to_tbl , { type: Sequelize.QueryTypes.SELECT})
+          .then(rsl => {
+            // get primary key type and name
+            // console.log(rsl)
+            const pKeyCol = rsl.filter(col => {
+              return col.Key === 'PRI';
+            })[0];
+              resolve({name:pKeyCol.Field,type:pKeyCol.Type})
+
+          }).catch(err => {
+            console.log('ERRR fkey  ' + err);
+            reject();
+      })
+    })
+
+  }
+
+
   newForeignKey(args){
     let rest = args.replace("AddForeignKeyTo", "");
     const data = rest.split('References');
     const from_tbl  = data[0];
     const to_tbl  = data[1];
-    let prfx = '';
 
     const migrName = this.getNewMigrationFileName(args);
 
@@ -484,30 +553,19 @@ export default class Migrator {
       name:migrName,
       table: from_tbl,
       referenceTable:to_tbl,
-      fkey_column_name: prfx + to_tbl + "_id",
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     };
 
-    this.connection
-        .query("SHOW KEYS FROM " + from_tbl + " WHERE Key_name = 'PRIMARY'", { type: Sequelize.QueryTypes.SELECT})
-        .then(rsl => {
-          const pkey = rsl[0].Column_name;
-          console.log(rsl[0]);
-          console.log('pkey ' + pkey);
-          let prfData = pkey.split('_');
-          prfx = prfData[0];
-          if (prfData.length >1) {
-            prfx += '_'
-          }
-          yamlData.fkey_column_name = prfx + to_tbl.toLocaleLowerCase() + "_id";
+    this.getPrefixOriginAndFkeyData(from_tbl,to_tbl).then(promiseRes=> {
+      const fkeyData = promiseRes[1]
+      yamlData.fkey_column_name = promiseRes[0] + to_tbl.toLocaleLowerCase() + "_id";
+      yamlData.fkey_type = fkeyData.type;
+      yamlData.referenceCol = fkeyData.name;
 
-          this.registerMigration(migrName, yaml.safeDump(yamlData));
-
-        }).catch(err => {
-          console.log('ERRR fkey  ' + err);
+      this.registerMigration(migrName, yaml.safeDump(yamlData));
     })
-  }
+   }
 
   newReference(ref) {
     console.log(ref);
@@ -553,7 +611,7 @@ export default class Migrator {
         "utf8"
       );
       let data = yaml.safeLoad(fileContents);
-      if (data.create_table === 1) {
+     if (data.create_table === 1) {
         const dropSql = "DROP TABLE " + data.table_name;
         this.connection
           .query(dropSql)
@@ -699,7 +757,7 @@ export default class Migrator {
     let cols = [];
     const colstart = 1;
     let yamlData = {
-      add_colums: 1,
+      add_columns: 1,
       name: migrName,
       table_name: to_table,
       columns: []
