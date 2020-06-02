@@ -404,7 +404,7 @@ export default class Migrator {
 
         switch (col.type) {
             case "STRING":
-                if (typeof(col.len) === "undefined") {
+                if (typeof (col.len) === "undefined") {
                     sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
                 } else {
                     sql += " VARCHAR(" + col.len + ") ";
@@ -435,6 +435,14 @@ export default class Migrator {
             default:
                 sql = "";
         }
+
+
+        if (typeof (col.not_null) !== "undefined") {
+            if (col.not_null) {
+                sql += " NOT NULL ";
+            }
+        }
+
         if (add === 1) {
             sql = " ADD COLUMN " + sql;
         }

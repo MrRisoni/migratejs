@@ -11,3 +11,4 @@ columns:
   - title: title
     type: STRING
     len: 80
+    not_null: true
