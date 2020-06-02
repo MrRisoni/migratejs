@@ -1,0 +1,8 @@
+add_columns: 1
+name: migration20200602_115716_AddColumnsTo_users
+table_name: users
+columns:
+  - title: dob
+    type: DATE
+    defaultVal: "'2010-01-01'"
+    after: usr_email

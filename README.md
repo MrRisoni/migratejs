@@ -26,7 +26,7 @@ columns:
 
 ```
 
-Multile primary keys
+Multiπle primary keys
 
 ```
 create_table: 1

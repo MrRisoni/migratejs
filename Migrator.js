@@ -403,6 +403,9 @@ export default class Migrator {
         let sql = "`" + prefix + col.title + "`";
 
         switch (col.type) {
+            case "DATE":
+                sql += "  " + col.type;
+                break;
             case "STRING":
                 if (typeof (col.len) === "undefined") {
                     sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
@@ -443,6 +446,9 @@ export default class Migrator {
                 sql = "";
         }
 
+        if (typeof (col.defaultVal) !== "undefined") {
+            sql += " DEFAULT " + col.defaultVal;
+        }
 
         if (typeof (col.not_null) !== "undefined") {
             if (col.not_null) {
@@ -452,6 +458,9 @@ export default class Migrator {
 
         if (add === 1) {
             sql = " ADD COLUMN " + sql;
+        }
+        if (typeof (col.after) !== "undefined") {
+            sql += " AFTER " + col.after;
         }
         return sql;
     }
@@ -774,7 +783,7 @@ export default class Migrator {
         const migrName = this.getNewMigrationFileName(data[0]);
         console.log("DATA");
         console.log(data);
-        let to_table = data[0].replace("AddColumnsTo", "");
+        let to_table = data[0].replace("AddColumnsTo_", "");
         let cols = [];
         const colstart = 1;
         let yamlData = {
