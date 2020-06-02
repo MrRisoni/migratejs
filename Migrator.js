@@ -194,7 +194,7 @@ export default class Migrator {
     update(migrationFile) {
         this.connection
             .query(
-                "UPDATE migrations SET processed = 1 " +
+                "UPDATE migrations SET processed = 1, updated_at = NOW() " +
                 " WHERE file_name = '" +
                 migrationFile +
                 "' "
@@ -376,16 +376,18 @@ export default class Migrator {
                         let cols = data.columns.map(col => {
                             return col.title;
                         });
-                        let to_table = this.nlpTable(data.table);
+                        let to_table = data.table;
 
                         let indexSQL =
-                            "CREATE " + data.type + " INDEX " + data.name + " ON " + to_table;
+                            "CREATE " ;
+                         if (data.unique) {
+                             indexSQL += " UNIQUE ";
+                         }
+                        indexSQL += " INDEX " + data.name + " ON " + to_table;
                         indexSQL += " ( " + cols.join(",") + ")";
                         console.log(indexSQL);
                         this.connection.query(indexSQL).then(success => {
-                            this.connection.query(
-                                "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
-                            );
+                            self.update(res.fileName);
                         });
                     } else if (data.create_fkey === 1) {
                         // create new column
@@ -561,13 +563,13 @@ export default class Migrator {
 
         const migrationName = "migration" + stamp + "_" + ref;
 
-        let to_table = ref.replace("AddIndexTo", "");
+        let to_table = ref.replace("AddIndexTo_", "");
         console.log(to_table);
         const yamlData = {
             create_index: 1,
             table: to_table,
             name: "",
-            type: "UNIQUE",
+            unique: false,
             columns: [{title: "ColA"}]
         };
         let yamlStr = yaml.safeDump(yamlData);
@@ -787,10 +789,6 @@ export default class Migrator {
             });
     }
 
-    nlpTable(model_name) {
-        let nounInflector = new natural.NounInflector();
-        return nounInflector.pluralize(model_name).toLowerCase();
-    }
 
     deleteMigration(dropSql, rollingBackId) {
         return new Promise((resolve, reject) => {

@@ -1,8 +1,8 @@
 drop index
+
 table charset
 text
 medium text
 float
 double
 varchar charset
-column comment
