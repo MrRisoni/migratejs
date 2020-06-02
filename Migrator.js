@@ -291,7 +291,7 @@ export default class Migrator {
                                     console.log(modifySQL);
                                     this.connection.query(modifySQL).then(success => {
                                         this.update(res.fileName);
-                                    }); 
+                                    });
                                 })
 
 
@@ -681,6 +681,7 @@ export default class Migrator {
     rollback() {
         // only for create table now
         console.log("Rollback qery");
+        const self = this;
         this.MigrationModel.findAll({
             where: {
                 processed: 1
@@ -707,21 +708,28 @@ export default class Migrator {
                     this.rollBackNotifyDB(dropSQL, rollingBackId)
                 });
 
+            } else if (data.change_column_type === 1) {
+              console.log('Reading Rollback Migration')
+
+              let fileContents = fs.readFileSync(
+                  `./rollbacks/rlbk_${rollingBackName}.yaml`,
+                  "utf8"
+              );
+              let data = yaml.safeLoad(fileContents);
+              console.log(data);
+
+              const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + data.title + " " + data.was.toUpperCase();
+               console.log(modifySQL);
+               this.connection.query(modifySQL).then(success => {
+                     self.deleteMigrationFromDB(rollingBackId);
+               });
+
             } else if (data.create_table === 1) {
                 const dropSql = "DROP TABLE " + data.table_name;
                 this.connection
                     .query(dropSql)
                     .then(res => {
-                        this.connection
-                            .query(
-                                "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
-                            )
-                            .then(res => {
-                                console.log("OK!");
-                            })
-                            .catch(err1 => {
-                                console.log(err1);
-                            });
+                       this.deleteMigrationFromDB(rollingBackId);
                     })
                     .catch(err2 => {
                         console.log(err2);
@@ -734,20 +742,28 @@ export default class Migrator {
         });
     }
 
+
+  deleteMigrationFromDB(rollingBackId)
+  {
+    this.connection
+        .query(
+            "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
+        )
+        .then(res => {
+            console.log("OK!");
+        })
+        .catch(err1 => {
+            console.log(err1);
+        });
+  }
+
+
     rollBackNotifyDB(dropSql, rollingBackId) {
+      const selbst = this;
         this.connection
             .query(dropSql)
             .then(res => {
-                this.connection
-                    .query(
-                        "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
-                    )
-                    .then(res => {
-                        console.log("OK!");
-                    })
-                    .catch(err1 => {
-                        console.log(err1);
-                    });
+               selbst.deleteMigrationFromDB(rollingBackId);
             })
             .catch(err2 => {
                 console.log(err2);
