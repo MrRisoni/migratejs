@@ -469,6 +469,46 @@ export default class Migrator {
       .catch(errWrite => console.log(errWrite));
   }
 
+  newForeignKey(args){
+    let rest = args.replace("AddForeignKeyTo", "");
+    const data = rest.split('References');
+    const from_tbl  = data[0];
+    const to_tbl  = data[1];
+    let prfx = '';
+
+    const migrName = this.getNewMigrationFileName(args);
+
+
+    let yamlData = {
+      create_fkey: 1,
+      name:migrName,
+      table: from_tbl,
+      referenceTable:to_tbl,
+      fkey_column_name: prfx + to_tbl + "_id",
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    };
+
+    this.connection
+        .query("SHOW KEYS FROM " + from_tbl + " WHERE Key_name = 'PRIMARY'", { type: Sequelize.QueryTypes.SELECT})
+        .then(rsl => {
+          const pkey = rsl[0].Column_name;
+          console.log(rsl[0]);
+          console.log('pkey ' + pkey);
+          let prfData = pkey.split('_');
+          prfx = prfData[0];
+          if (prfData.length >1) {
+            prfx += '_'
+          }
+          yamlData.fkey_column_name = prfx + to_tbl.toLocaleLowerCase() + "_id";
+
+          this.registerMigration(migrName, yaml.safeDump(yamlData));
+
+        }).catch(err => {
+          console.log('ERRR fkey  ' + err);
+    })
+  }
+
   newReference(ref) {
     console.log(ref);
 

@@ -20,7 +20,10 @@ if (process.argv[2] === "g" && process.argv[3] === "model") {
 } else if (process.argv[2].indexOf("AddReference") > -1) {
   console.log("Creating index");
   migr.newReference(process.argv[2]);
-} else if (process.argv[2].indexOf("AddIndex") > -1) {
+} else if (process.argv[2].indexOf("AddForeignKey") > -1) {
+  console.log("Creating ForeignKey");
+  migr.newForeignKey(process.argv[2]);
+}else if (process.argv[2].indexOf("AddIndex") > -1) {
   console.log("Creating index");
   migr.newIndex(process.argv[2]);
 } else if (process.argv[2].indexOf("AddColumns") > -1) {
