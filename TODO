@@ -1,6 +1,4 @@
 
-support foreign keys
-
 Add Column  | Rollback
 Rename Column  | Rollback
 Remove Column  | Rollback

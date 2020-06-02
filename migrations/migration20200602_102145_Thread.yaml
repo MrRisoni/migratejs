@@ -1,0 +1,13 @@
+create_table: 1
+prefix: thrd
+name: migration20200602_102145_Thread
+table_name: threads
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: title
+    type: STRING
+    len: 80
