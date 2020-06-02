@@ -1,0 +1,16 @@
+create_table: 1
+prefix: usr
+name: migration20200601_093636_User
+table_name: User
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: name
+    type: STRING
+  - title: email
+    type: STRING
+  - title: passwd
+    type: STRING
