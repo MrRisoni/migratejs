@@ -78,7 +78,7 @@ export default class Migrator {
                         type: Sequelize.CHAR,
                         field: "file_name"
                     },
-                    processes: {
+                    processed: {
                         type: Sequelize.INTEGER.UNSIGNED,
                         field: "processed"
                     }
