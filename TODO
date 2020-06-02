@@ -3,7 +3,7 @@ Add Column  | Rollback
 Rename Column  | Rollback
 Remove Column  | Rollback
 
-
+keep in yaml json a schema of the database , so as to rollback
 NO NLP
 
 add _ _ in commands

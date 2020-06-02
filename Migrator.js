@@ -250,6 +250,18 @@ export default class Migrator {
                         this.connection.query(dropSQL).then(success => {
                             this.update(res.fileName);
                         });
+                    } else if (data.change_column_type === 1) {
+                        this.getPrefixOrigin(data.table_name).then(dt => {
+                            let prfx = dt;
+                            console.log('prfx ' + prfx)
+                            console.log()
+                            const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + prfx + data.columns[0].title + " " + data.columns[0].to.toUpperCase();
+                            console.log(modifySQL);
+                            this.connection.query(modifySQL).then(success => {
+                                this.update(res.fileName);
+                            });
+                        });
+
                     } else if (data.remove_columns === 1) {
                         console.log(" rename cols ");
 
@@ -332,7 +344,7 @@ export default class Migrator {
                                 "UPDATE migrations SET processed=1 WHERE id = '" + res.id + "' "
                             );
                         });
-                    } else if (data.create_fkey == 1) {
+                    } else if (data.create_fkey === 1) {
                         // create new column
                         const addColSQL = "ALTER TABLE " + data.table + " ADD COLUMN " + data.fkey_column_name + " " + data.fkey_type;
                         this.connection.query(addColSQL).then(addColRes => {
@@ -641,18 +653,17 @@ export default class Migrator {
                 "utf8"
             );
             let data = yaml.safeLoad(fileContents);
-            if (data.add_columns ==1) {
+            if (data.add_columns === 1) {
                 let prfx = '';
                 this.getPrefixOrigin(data.table_name).then(dt => {
-                   prfx = dt;
-                   console.log('prfx ' + prfx)
+                    prfx = dt;
+                    console.log('prfx ' + prfx)
                     console.log()
-                    const dropSQL = "ALTER TABLE " + data.table_name + " DROP COLUMN  " +  prfx + data.columns[0].title;
+                    const dropSQL = "ALTER TABLE " + data.table_name + " DROP COLUMN  " + prfx + data.columns[0].title;
                     this.rollBackNotifyDB(dropSQL, rollingBackId)
                 });
 
-            }
-            else if (data.create_table === 1) {
+            } else if (data.create_table === 1) {
                 const dropSql = "DROP TABLE " + data.table_name;
                 this.connection
                     .query(dropSql)
@@ -679,7 +690,7 @@ export default class Migrator {
         });
     }
 
-    rollBackNotifyDB(dropSql,rollingBackId){
+    rollBackNotifyDB(dropSql, rollingBackId) {
         this.connection
             .query(dropSql)
             .then(res => {
@@ -786,6 +797,7 @@ export default class Migrator {
 
         this.registerMigration(migrName, yaml.safeDump(yamlData));
     }
+
     changeColumnType(data) {
         console.log(data)
         const migrName = this.getNewMigrationFileName(data[0]);
