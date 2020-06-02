@@ -11,6 +11,7 @@ export default class Migrator {
         this.connection = null;
         this.MigrationModel = null;
         this.yamlConfigFile = ymlConfig;
+        this.dialect = 'postgres';
         this.supportedColTypes = [
             "tinyint",
             "int",
@@ -437,18 +438,20 @@ export default class Migrator {
                         console.log(data);
                         let pKey = prefix + "id";
                         let pKeysList = [pKey];
+                        let quote = (this.dialect === 'postgres') ? "" : "`";
+                        let AutoIncrement = (this.dialect === 'postgres') ? "" : " AUTO_INCREMENT ";
                         let columnsSQL = [
-                            "`" +
+                            quote +
                             pKey +
-                            "`  " +
+                            quote + " " +
                             data["id"]["type"].toUpperCase() +
-                            " AUTO_INCREMENT "
+                            AutoIncrement
                         ];
                         data.columns.forEach((item, i) => {
                             if (item.primary) {
                                 pKeysList.push(prefix + item.title);
                             }
-                            columnsSQL.push(this.makeColumnSQL(item, prefix));
+                            columnsSQL.push(this.makeColumnSQL(item, prefix,0, quote));
                         });
 
                         if (data.created_at) {
@@ -467,16 +470,16 @@ export default class Migrator {
                             columnsSQL.join(",") +
                             ") ";
 
-                        if (typeof (data.engine !== "undefined")) {
+                        if (typeof (data.engine) !== "undefined") {
                             createSQL += " ENGINE =  " + data.engine;
                         }
-                        if (typeof (data.comment !== "undefined")) {
-                            if (data.comment.length > 0) {
-                                createSQL += " COMMENT '" + data.comment + "'";
-                            }
+                        if (typeof (data.comment) !== "undefined" &&  (data.comment.length > 0)) {
+                                createSQL += " COMMENT '" + data.comment + "'"
                         }
 
+
                         console.log(createSQL);
+
                         console.log(res.id + " " + res.fileName);
 
                         this.connection.query(createSQL).then(success => {
@@ -492,9 +495,10 @@ export default class Migrator {
         });
     }
 
-    makeColumnSQL(col, prefix, add = 0) {
-        let sql = "`" + prefix + col.title + "`";
-
+    makeColumnSQL(col, prefix, add = 0,quote ="`") {
+        let sql = quote + prefix + col.title + quote;
+        console.log('making comment for col ');
+        console.log(col);
         switch (col.type) {
             case "DATE":
                 sql += "  " + col.type;
@@ -556,8 +560,8 @@ export default class Migrator {
             sql += " AFTER " + col.after;
         }
 
-        if (typeof (col.comment !== "undefined") && (col.comment.length > 0)) {
-            sql += " COMMENT '" + col.comment + "'";
+        if (typeof (col.comment) !== "undefined" && col.comment.length > 0) {
+                sql += " COMMENT '" + col.comment + "'";
         }
 
         return sql;
