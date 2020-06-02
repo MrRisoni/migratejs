@@ -25,7 +25,24 @@ if (process.argv[2].indexOf("CreateTable") > -1) {
 } else if (process.argv[2].indexOf("AddIndex") > -1) {
     console.log("Creating index");
     migr.newIndex(process.argv[2]);
-} else if (process.argv[2].indexOf("AddColumns") > -1) {
+} else if (process.argv[2].indexOf("RemoveIndexFrom") > -1) {
+    console.log("Removing index");
+    var rest_args = [];
+   /* process.argv.forEach((arg, idx) => {
+        if (idx > 1) {
+            rest_args.push(arg);
+        }
+    }); */
+    rest_args = process.argv.map((arg, idx) => {
+        if (idx >1) {
+            return arg;
+        }
+    }).filter(arj => {
+        return arj!== undefined;
+    })
+    migr.removeIndex(rest_args);
+}
+else if (process.argv[2].indexOf("AddColumns") > -1) {
     var rest_args = [];
     process.argv.forEach((arg, idx) => {
         if (idx > 1) {

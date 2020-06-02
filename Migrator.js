@@ -97,7 +97,7 @@ export default class Migrator {
         console.log("migration args");
         console.log(args);
 
-        let model_name = args[0].replace('CreateTable_','');
+        let model_name = args[0].replace('CreateTable_', '');
 
         const stamp = moment().format("YYYYMMDD_hhmmss");
         const self = this;
@@ -191,6 +191,23 @@ export default class Migrator {
         return this.connection.query(query);
     }
 
+    removeIndex(data) {
+        console.log('finc removeIndex');
+        console.log(data);
+        const migrName = this.getNewMigrationFileName(data[0]);
+        let to_table = data[0].replace("RemoveIndexFrom_", "");
+
+        let yamlData = {
+            drop_index: 1,
+            name: migrName,
+            table_name: to_table,
+            index_name: data[1]
+        };
+
+        this.registerMigration(migrName, yaml.safeDump(yamlData));
+
+    }
+
     update(migrationFile) {
         this.connection
             .query(
@@ -268,6 +285,10 @@ export default class Migrator {
                         this.connection.query(dropSQL).then(success => {
                             this.update(res.fileName);
                         });
+                    } else if (data.drop_index === 1) {
+                        this.connection.query("DROP INDEX " +  data.index_name + " ON " + data.table_name).then(success => {
+                            this.update(res.fileName);
+                        });
                     } else if (data.change_column_type === 1) {
 
 
@@ -276,21 +297,24 @@ export default class Migrator {
                             console.log('prfx ' + prfx)
                             // get original type
                             // write rollback backup migration file
-                            this.getColType(data.table_name,prfx + data.columns[0].title).then(oldTypeRes => {
+                            this.getColType(data.table_name, prfx + data.columns[0].title).then(oldTypeRes => {
                                 console.log('old type');
                                 console.log(oldTypeRes[0]);
 
                                 const ymlOldType = {
-                                  change_column_type : 1,
-                                  name : 'rlbk_' + res.fileName,
-                                  table_name: data.table_name,
-                                  title:   prfx + data.columns[0].title,
-                                  was : oldTypeRes[0].Type
+                                    change_column_type: 1,
+                                    name: 'rlbk_' + res.fileName,
+                                    table_name: data.table_name,
+                                    title: prfx + data.columns[0].title,
+                                    was: oldTypeRes[0].Type
                                 }
 
 
-                                this.writeRollBackMigrationFile({filename: 'rlbk_' + res.fileName, contents: yaml.safeDump(ymlOldType)}).then(writeRblk => {
-                                   const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + prfx + data.columns[0].title + " " + data.columns[0].to.toUpperCase();
+                                this.writeRollBackMigrationFile({
+                                    filename: 'rlbk_' + res.fileName,
+                                    contents: yaml.safeDump(ymlOldType)
+                                }).then(writeRblk => {
+                                    const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + prfx + data.columns[0].title + " " + data.columns[0].to.toUpperCase();
                                     console.log(modifySQL);
                                     this.connection.query(modifySQL).then(success => {
                                         this.update(res.fileName);
@@ -299,8 +323,6 @@ export default class Migrator {
 
 
                             });
-
-
 
 
                         });
@@ -379,10 +401,10 @@ export default class Migrator {
                         let to_table = data.table;
 
                         let indexSQL =
-                            "CREATE " ;
-                         if (data.unique) {
-                             indexSQL += " UNIQUE ";
-                         }
+                            "CREATE ";
+                        if (data.unique) {
+                            indexSQL += " UNIQUE ";
+                        }
                         indexSQL += " INDEX " + data.name + " ON " + to_table;
                         indexSQL += " ( " + cols.join(",") + ")";
                         console.log(indexSQL);
@@ -440,11 +462,11 @@ export default class Migrator {
                             columnsSQL.join(",") +
                             ") ";
 
-                        if (typeof(data.engine!== "undefined")) {
+                        if (typeof (data.engine !== "undefined")) {
                             createSQL += " ENGINE =  " + data.engine;
                         }
-                        if (typeof(data.comment!== "undefined")) {
-                            if (data.comment.length  >0) {
+                        if (typeof (data.comment !== "undefined")) {
+                            if (data.comment.length > 0) {
                                 createSQL += " COMMENT '" + data.comment + "'";
                             }
                         }
@@ -529,7 +551,7 @@ export default class Migrator {
             sql += " AFTER " + col.after;
         }
 
-        if (typeof(col.comment!== "undefined") && (col.comment.length  >0)) {
+        if (typeof (col.comment !== "undefined") && (col.comment.length > 0)) {
             sql += " COMMENT '" + col.comment + "'";
         }
 
@@ -591,9 +613,9 @@ export default class Migrator {
         return Promise.all([this.getPrefixOrigin(from_table), this.getFkeyTypeAndName(to_table)]);
     }
 
-   getColType(from_tbl,col_name) {
-      return this.connection.query("SHOW COLUMNS FROM " + from_tbl + " WHERE Field = '"  + col_name +  "' ", {type: Sequelize.QueryTypes.SELECT})
-   }
+    getColType(from_tbl, col_name) {
+        return this.connection.query("SHOW COLUMNS FROM " + from_tbl + " WHERE Field = '" + col_name + "' ", {type: Sequelize.QueryTypes.SELECT})
+    }
 
     getPrefixOrigin(from_tbl) {
         const selbst = this;
@@ -728,27 +750,27 @@ export default class Migrator {
                 });
 
             } else if (data.change_column_type === 1) {
-              console.log('Reading Rollback Migration')
+                console.log('Reading Rollback Migration')
 
-              let fileContents = fs.readFileSync(
-                  `./rollbacks/rlbk_${rollingBackName}.yaml`,
-                  "utf8"
-              );
-              let data = yaml.safeLoad(fileContents);
-              console.log(data);
+                let fileContents = fs.readFileSync(
+                    `./rollbacks/rlbk_${rollingBackName}.yaml`,
+                    "utf8"
+                );
+                let data = yaml.safeLoad(fileContents);
+                console.log(data);
 
-              const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + data.title + " " + data.was.toUpperCase();
-               console.log(modifySQL);
-               this.connection.query(modifySQL).then(success => {
-                     self.deleteMigrationFromDB(rollingBackId);
-               });
+                const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + data.title + " " + data.was.toUpperCase();
+                console.log(modifySQL);
+                this.connection.query(modifySQL).then(success => {
+                    self.deleteMigrationFromDB(rollingBackId);
+                });
 
             } else if (data.create_table === 1) {
                 const dropSql = "DROP TABLE " + data.table_name;
                 this.connection
                     .query(dropSql)
                     .then(res => {
-                       this.deleteMigrationFromDB(rollingBackId);
+                        this.deleteMigrationFromDB(rollingBackId);
                     })
                     .catch(err2 => {
                         console.log(err2);
@@ -762,27 +784,26 @@ export default class Migrator {
     }
 
 
-  deleteMigrationFromDB(rollingBackId)
-  {
-    this.connection
-        .query(
-            "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
-        )
-        .then(res => {
-            console.log("OK!");
-        })
-        .catch(err1 => {
-            console.log(err1);
-        });
-  }
+    deleteMigrationFromDB(rollingBackId) {
+        this.connection
+            .query(
+                "DELETE FROM  migrations WHERE id = '" + rollingBackId + "' "
+            )
+            .then(res => {
+                console.log("OK!");
+            })
+            .catch(err1 => {
+                console.log(err1);
+            });
+    }
 
 
     rollBackNotifyDB(dropSql, rollingBackId) {
-      const selbst = this;
+        const selbst = this;
         this.connection
             .query(dropSql)
             .then(res => {
-               selbst.deleteMigrationFromDB(rollingBackId);
+                selbst.deleteMigrationFromDB(rollingBackId);
             })
             .catch(err2 => {
                 console.log(err2);
