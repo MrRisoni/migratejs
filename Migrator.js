@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import path from 'path';
 import Sequelize from 'sequelize';
-
+import * as dialects from './dialects'
 
 export default class Migrator {
     constructor(ymlConfig) {
@@ -458,10 +458,10 @@ export default class Migrator {
                         });
 
                         if (data.created_at) {
-                            columnsSQL.push("`" + prefix + "created_at` DATETIME");
+                            columnsSQL.push(dialects.createdAt(this.dialect,prefix));
                         }
                         if (data.updated_at) {
-                            columnsSQL.push("`" + prefix + "updated_at` DATETIME");
+                            columnsSQL.push(dialects.updatedAt(this.dialect,prefix));
                         }
 
                         columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");

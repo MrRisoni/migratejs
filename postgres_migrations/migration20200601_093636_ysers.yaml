@@ -6,8 +6,8 @@ id:
   type: bigint
   unsigned: true
   auto_increment: true
-created_at: false
-updated_at: false
+created_at: true
+updated_at: true
 columns:
   - title: name
     type: STRING
