@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import path from 'path';
 import Sequelize from 'sequelize';
-import * as dialects from './dialects'
+import * as dialects from './sql_dialects'
 
 export default class Migrator {
     constructor(ymlConfig) {
@@ -438,18 +438,12 @@ export default class Migrator {
                         console.log(data);
                         let pKey = prefix + "id";
                         let pKeysList = [pKey];
-                        let quote = (this.dialect === 'postgres') ? "" : "`";
-                        let AutoIncrement = "";
-                        if (data.id['auto_increment']) {
-                            AutoIncrement = (this.dialect === 'postgres') ? " SERIAL " : data["id"]["type"].toUpperCase() + " AUTO_INCREMENT ";
-                        }
+                        let quote = dialects.getQuotes(this.dialect)
 
                         let columnsSQL = [
-                            quote +
-                            pKey +
-                            quote + " " +
-                            AutoIncrement
+                            dialects.getPrimaryKey(this.dialect,pKey, data)
                         ];
+
                         data.columns.forEach((item, i) => {
                             if (item.primary) {
                                 pKeysList.push(prefix + item.title);
