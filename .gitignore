@@ -23,3 +23,5 @@ yarn-error.log*
 *.env
 .env.yml
 *.swp
+*.sh
+bash_*

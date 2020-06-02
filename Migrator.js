@@ -786,6 +786,24 @@ export default class Migrator {
 
         this.registerMigration(migrName, yaml.safeDump(yamlData));
     }
+    changeColumnType(data) {
+        console.log(data)
+        const migrName = this.getNewMigrationFileName(data[0]);
+        let to_table = data[0].replace("ChangeTypeIn_", "");
+        let yamlData = {
+            change_column_type: 1,
+            name: migrName,
+            table_name: to_table,
+            columns: []
+        };
+
+        for (let col = 1; col < data.length; col++) {
+            let col_data = data[col].split(":");
+            yamlData.columns.push({title: col_data[0], to: col_data[1]});
+        }
+        this.registerMigration(migrName, yaml.safeDump(yamlData));
+
+    }
 
     renameColumn(data) {
         const migrName = this.getNewMigrationFileName(data[0]);
