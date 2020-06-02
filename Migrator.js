@@ -962,4 +962,14 @@ export default class Migrator {
         }
         this.registerMigration(migrName, yaml.safeDump(yamlData));
     }
+
+    getUsefulArgs(argsArr, beginIdx) {
+        return argsArr.map((arg, idx) => {
+            if (idx >beginIdx) {
+                return arg;
+            }
+        }).filter(arj => {
+            return arj!== undefined;
+        })
+    }
 };
