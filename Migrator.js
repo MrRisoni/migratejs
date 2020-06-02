@@ -165,6 +165,21 @@ export default class Migrator {
         });
     }
 
+    writeRollBackMigrationFile(args) {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(
+                "rollbacks/" + args.filename + ".yaml",
+                args.contents,
+                err => {
+                    if (err) {
+                        reject("Error writing file " + err);
+                    }
+                    resolve("File written!");
+                }
+            );
+        });
+    }
+
     insertMigration(fileName) {
         const query =
             " INSERT INTO `migrations` (`file_name`,`processed`, `created_at`) VALUES ('" +
@@ -251,15 +266,40 @@ export default class Migrator {
                             this.update(res.fileName);
                         });
                     } else if (data.change_column_type === 1) {
+
+
                         this.getPrefixOrigin(data.table_name).then(dt => {
                             let prfx = dt;
                             console.log('prfx ' + prfx)
-                            console.log()
-                            const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + prfx + data.columns[0].title + " " + data.columns[0].to.toUpperCase();
-                            console.log(modifySQL);
-                            this.connection.query(modifySQL).then(success => {
-                                this.update(res.fileName);
+                            // get original type
+                            // write rollback backup migration file
+                            this.getColType(data.table_name,prfx + data.columns[0].title).then(oldTypeRes => {
+                                console.log('old type');
+                                console.log(oldTypeRes[0]);
+
+                                const ymlOldType = {
+                                  change_column_type : 1,
+                                  name : 'rlbk_' + res.fileName,
+                                  table_name: data.table_name,
+                                  title:   prfx + data.columns[0].title,
+                                  was : oldTypeRes[0].Type
+                                }
+
+
+                                this.writeRollBackMigrationFile({filename: 'rlbk_' + res.fileName, contents: yaml.safeDump(ymlOldType)}).then(writeRblk => {
+                                   const modifySQL = "ALTER TABLE " + data.table_name + " MODIFY COLUMN  " + prfx + data.columns[0].title + " " + data.columns[0].to.toUpperCase();
+                                    console.log(modifySQL);
+                                    this.connection.query(modifySQL).then(success => {
+                                        this.update(res.fileName);
+                                    }); 
+                                })
+
+
                             });
+
+
+
+
                         });
 
                     } else if (data.remove_columns === 1) {
@@ -531,6 +571,10 @@ export default class Migrator {
     getPrefixOriginAndFkeyData(from_table, to_table) {
         return Promise.all([this.getPrefixOrigin(from_table), this.getFkeyTypeAndName(to_table)]);
     }
+
+   getColType(from_tbl,col_name) {
+      return this.connection.query("SHOW COLUMNS FROM " + from_tbl + " WHERE Field = '"  + col_name +  "' ", {type: Sequelize.QueryTypes.SELECT})
+   }
 
     getPrefixOrigin(from_tbl) {
         const selbst = this;
