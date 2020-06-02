@@ -526,6 +526,11 @@ export default class Migrator {
         if (typeof (col.after) !== "undefined") {
             sql += " AFTER " + col.after;
         }
+
+        if (typeof(col.comment!== "undefined") && (col.comment.length  >0)) {
+            sql += " COMMENT '" + col.comment + "'";
+        }
+
         return sql;
     }
 

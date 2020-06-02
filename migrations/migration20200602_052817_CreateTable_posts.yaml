@@ -12,4 +12,5 @@ created_at: true
 updated_at: true
 columns:
   - title: body
-    type: TEXT
+    type: STRING
+    comment: 'a comment'
