@@ -331,21 +331,22 @@ export default class Migrator {
               );
             });
           } else if (data.create_fkey ==1 ) {
-           /* // create new column
+           // create new column
             const addColSQL = "ALTER TABLE " + data.table + " ADD COLUMN " + data.fkey_column_name + " " + data.fkey_type;
             this.connection.query(addColSQL).then(addColRes => {
-              const addConstaintSQL =  ALTER TABLE Orders
-              ADD FOREIGN KEY (product_category, product_id)
-              REFERENCES product(category, id)
-              ON UPDATE CASCADE ON DELETE RESTRICT
-              this.connection.query(addConstaintSQL).then(addConstrRes => {
+              const addConstraintSQL = "  ALTER TABLE " + data.table +
+                  " ADD FOREIGN KEY ( " + data.fkey_column_name + ") " +
+                  " REFERENCES " + data.referenceTable + "(" + data.referenceCol + ") " +
+                  "  ON UPDATE " + data.onUpdate + " ON DELETE  " + data.onDelete;
+              console.log(addConstraintSQL);
+              this.connection.query(addConstraintSQL).then(addConstrRes => {
 
               }).catch(err2 => {
                 console.log(err2);
               });
             }).catch(err1 => {
               console.log(err1);
-            }); */
+            });
           }else if (data.create_table === 1) {
             console.log(data);
             let pKey = prefix + "id";
