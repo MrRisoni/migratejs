@@ -12,3 +12,7 @@ columns:
     type: STRING
     len: 80
     not_null: true
+  - title: upvotes
+    type: TINYINT
+    unsigned: true
+    defaultVal: 0

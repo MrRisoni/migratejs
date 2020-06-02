@@ -411,7 +411,14 @@ export default class Migrator {
                 }
                 break;
             case "INT":
-                sql += " INT ";
+            case "TINYINT":
+                sql += "  " + col.type;
+                if (typeof (col.unsigned) !== "undefined") {
+                    sql += " UNSIGNED ";
+                }
+                if (typeof (col.defaultVal) !== "undefined") {
+                    sql += " DEFAULT " + col.defaultVal;
+                }
                 break;
             case "TEXT":
                 sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
