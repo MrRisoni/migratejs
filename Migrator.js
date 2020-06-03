@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import Sequelize from 'sequelize';
 import * as dialects from './sql_dialects'
+import _ from 'lodash'
+
 
 export default class Migrator {
     constructor(ymlConfig) {
@@ -192,9 +194,9 @@ export default class Migrator {
     }
 
     insertMigration(fileName) {
-         return this.MigrationModel.build({
-            fileName:fileName,
-            processed:0,
+        return this.MigrationModel.build({
+            fileName: fileName,
+            processed: 0,
         }).save();
     }
 
@@ -293,7 +295,7 @@ export default class Migrator {
                             this.update(res.fileName);
                         });
                     } else if (data.drop_index === 1) {
-                        this.connection.query("DROP INDEX " +  data.index_name + " ON " + data.table_name).then(success => {
+                        this.connection.query("DROP INDEX " + data.index_name + " ON " + data.table_name).then(success => {
                             this.update(res.fileName);
                         });
                     } else if (data.change_column_type === 1) {
@@ -442,21 +444,21 @@ export default class Migrator {
                         let quote = dialects.getQuotes(this.dialect)
 
                         let columnsSQL = [
-                            dialects.getPrimaryKey(this.dialect,pKey, data)
+                            dialects.getPrimaryKey(this.dialect, pKey, data)
                         ];
 
                         data.columns.forEach((item, i) => {
                             if (item.primary) {
                                 pKeysList.push(prefix + item.title);
                             }
-                            columnsSQL.push(this.makeColumnSQL(item, prefix,0, quote));
+                            columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
                         });
 
                         if (data.created_at) {
-                            columnsSQL.push(dialects.createdAt(this.dialect,prefix));
+                            columnsSQL.push(dialects.createdAt(this.dialect, prefix));
                         }
                         if (data.updated_at) {
-                            columnsSQL.push(dialects.updatedAt(this.dialect,prefix));
+                            columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
                         }
 
                         columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
@@ -471,8 +473,8 @@ export default class Migrator {
                         if (typeof (data.engine) !== "undefined") {
                             createSQL += " ENGINE =  " + data.engine;
                         }
-                        if (typeof (data.comment) !== "undefined" &&  (data.comment.length > 0)) {
-                                createSQL += " COMMENT '" + data.comment + "'"
+                        if (typeof (data.comment) !== "undefined" && (data.comment.length > 0)) {
+                            createSQL += " COMMENT '" + data.comment + "'"
                         }
 
 
@@ -491,7 +493,7 @@ export default class Migrator {
         });
     }
 
-    makeColumnSQL(col, prefix, add = 0,quote ="`") {
+    makeColumnSQL(col, prefix, add = 0, quote = "`") {
         let sql = quote + prefix + col.title + quote;
         console.log('making comment for col ');
         console.log(col);
@@ -557,7 +559,7 @@ export default class Migrator {
         }
 
         if (typeof (col.comment) !== "undefined" && col.comment.length > 0) {
-                sql += " COMMENT '" + col.comment + "'";
+            sql += " COMMENT '" + col.comment + "'";
         }
 
         return sql;
@@ -841,27 +843,52 @@ export default class Migrator {
         });
     }
 
+    getMigrationFiles() {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            const directoryPath = path.join(__dirname, self.migrations_path);
+            fs.readdir(directoryPath, function (err, files) {
+                resolve(files.map(fil => {
+                    return fil.replace(".yaml", "");
+                }));
+
+            })
+        });
+
+    }
+
+    getAllMigrationNamesFromDB() {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            self.MigrationModel.findAll({
+                where: {
+                    processed: 1
+                }
+            }).then(res => {
+                console.log('sql result');
+                //  console.log(res.map(rs => {return rs.fileName}));
+                resolve(res.map(rs => {
+                    return rs.fileName
+                }));
+            })
+        })
+
+    }
+
     undoRollback() {
         //get the list of migration files
         // get migration names from db
-        // diff
+        // diff will the migration that was rolled back
         // insert diff to db
         // migrate
-
-        // or just get the last file
         const self = this;
-        const directoryPath = path.join(__dirname, this.migrations_path);
-        fs.readdir(directoryPath, function (err, files) {
-            const noyml = files.map(fil => {
-                return fil.replace(".yaml", "");
-            });
-            const lastMigration = noyml.pop();
-            console.log(lastMigration);
 
-            self.insertMigration(lastMigration).then(foo => {
+        Promise.all([this.getMigrationFiles(), this.getAllMigrationNamesFromDB()]).then(res => {
+            self.insertMigration(_.difference(res[0], res[1])[0]).then(foo => {
                 self.executeMigrations();
-            });
-        });
+            })
+        })
+
     }
 
     dropTables(data) {
@@ -970,11 +997,11 @@ export default class Migrator {
 
     getUsefulArgs(argsArr, beginIdx) {
         return argsArr.map((arg, idx) => {
-            if (idx >beginIdx) {
+            if (idx > beginIdx) {
                 return arg;
             }
         }).filter(arj => {
-            return arj!== undefined;
+            return arj !== undefined;
         })
     }
 };
