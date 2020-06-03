@@ -11,7 +11,7 @@ export default class Migrator {
         this.connection = null;
         this.MigrationModel = null;
         this.yamlConfigFile = ymlConfig;
-        this.dialect = 'postgres';
+        this.dialect = '';
         this.supportedColTypes = [
             "tinyint",
             "int",
@@ -32,10 +32,12 @@ export default class Migrator {
                 fs.readFileSync(this.yamlConfigFile, "utf8")
             );
             const settings = projectSettings["database"];
+            this.dialect = projectSettings['dialect'];
+            console.log('settings');
+            console.log(this.dialect);
             console.log("connecting to " + dbOption);
             console.log(settings[dbOption]);
-            //this.migrations_path = "migrations";
-            this.migrations_path = "postgres_migrations";
+            this.migrations_path = (this.dialect == 'postgres') ? "postgres_migrations" : "migrations";
 
             this.connection = new Sequelize(
                 settings[dbOption].db,
@@ -43,7 +45,7 @@ export default class Migrator {
                 settings[dbOption].pass,
                 {
                     host: settings[dbOption].host,
-                    dialect: "postgres",
+                    dialect: this.dialect,
                     dialectOptions: {
                         ssl: false
                     },
@@ -190,11 +192,10 @@ export default class Migrator {
     }
 
     insertMigration(fileName) {
-        const query =
-            " INSERT INTO `migrations` (`file_name`,`processed`, `created_at`) VALUES ('" +
-            fileName +
-            "',0, NOW())";
-        return this.connection.query(query);
+         return this.MigrationModel.build({
+            fileName:fileName,
+            processed:0,
+        }).save();
     }
 
     removeIndex(data) {
