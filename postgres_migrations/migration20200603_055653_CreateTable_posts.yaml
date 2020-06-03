@@ -4,7 +4,6 @@ name: migration20200603_055653_CreateTable_posts
 table_name: posts
 comment: ''
 charset: utf8
-engine: InnoDB
 id:
   type: bigint
   unsigned: true

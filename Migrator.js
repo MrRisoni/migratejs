@@ -740,7 +740,7 @@ export default class Migrator {
             const rollingBackId = foo[0].id;
 
             let fileContents = fs.readFileSync(
-                `./migrations/${rollingBackName}.yaml`,
+                `./${this.migrations_path}/${rollingBackName}.yaml`,
                 "utf8"
             );
             let data = yaml.safeLoad(fileContents);
