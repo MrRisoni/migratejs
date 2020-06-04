@@ -872,15 +872,7 @@ export default class Migrator {
 
     getMigrationFiles() {
         const self = this;
-      /*  return new Promise((resolve, reject) => {
-            const directoryPath = path.join(__dirname, self.migrations_path);
-            fs.readdir(directoryPath, function (err, files) {
-                resolve(files.map(fil => {
-                    return fil.replace(".yaml", "");
-                }));
 
-            })
-        }); */
           return new Promise((resolve, reject) => {
               const directoryPath = path.join(__dirname, self.migrations_path);
               fs.readdir(directoryPath, function (err, files) {
@@ -889,7 +881,14 @@ export default class Migrator {
                     const data = fil.split('_');
 
                       return {id:data[0],name:fil.replace(".yaml", "")};
-                  }));
+                  }).sort(function(a, b) {
+                    // sort in order of creation
+                    if (a.id < b.id) return -1;
+                    if (a.id > b.id) return 1;
+                    return 0;
+                  })
+
+                );
 
               })
           });
@@ -1055,15 +1054,6 @@ export default class Migrator {
          and tries to execute them
          */
 this.getMigrationFiles().then(fileList => {
-
-fileList.sort(function(a, b) {
-  // Compare the 2 dates
-  if (a.id < b.id) return -1;
-  if (a.id > b.id) return 1;
-  return 0;
-})
-
-
   console.log(fileList);
 })
 
