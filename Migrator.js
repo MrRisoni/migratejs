@@ -1031,4 +1031,16 @@ export default class Migrator {
             return arj !== undefined;
         })
     }
+
+    refreshDB()
+    {
+      /* say many devs are working on the same project
+         one dev will pull all the migration files from db
+         but his copy of db will not have the migrations
+         this functions inserts migrations to db
+         and tries to execute them
+         */
+this.getMigrationFiles();
+
+    }
 };

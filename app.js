@@ -35,6 +35,8 @@ if (process.argv[2].indexOf("CreateTable") > -1) {
     migr.rollback();
 } else if (process.argv[2] === "undorollback") {
     migr.undoRollback();
+}else if (process.argv[2] === "refresh") {
+    migr.refreshDB();
 }
 else {
     console.log('Unknown command ' + process.argv[2])
