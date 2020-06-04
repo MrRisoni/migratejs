@@ -1,6 +1,0 @@
-create_index: 1
-table: tickets
-name: 'pnrindx'
-unique: false
-columns:
-  - title: tkt_pnr

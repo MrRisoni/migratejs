@@ -1,6 +1,0 @@
-add_columns: 1
-name: migration20200602_124417_AddColumnsTo_threads
-table_name: threads
-columns:
-  - title: downvotes
-    type: DATE

@@ -1,8 +1,0 @@
-add_colums: 1
-name: migration20200530_094028_AddColumnsToUser
-table_name: users
-columns:
-  - title: email
-    type: STRING
-  - title: passwd
-    type: STRING

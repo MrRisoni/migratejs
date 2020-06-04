@@ -1,5 +1,0 @@
-drop_index: 1
-name: rlbk_migration20200602_062201_RemoveIndexFrom_tickets
-table_name: tickets
-title: tkt_pnr_idx
-column: tkt_pnr

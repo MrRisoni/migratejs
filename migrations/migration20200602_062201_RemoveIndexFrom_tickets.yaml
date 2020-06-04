@@ -1,4 +1,0 @@
-drop_index: 1
-name: migration20200602_062201_RemoveIndexFrom_tickets
-table_name: tickets
-index_name: tkt_pnr_idx
