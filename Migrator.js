@@ -872,7 +872,7 @@ export default class Migrator {
 
     getMigrationFiles() {
         const self = this;
-        return new Promise((resolve, reject) => {
+      /*  return new Promise((resolve, reject) => {
             const directoryPath = path.join(__dirname, self.migrations_path);
             fs.readdir(directoryPath, function (err, files) {
                 resolve(files.map(fil => {
@@ -880,7 +880,21 @@ export default class Migrator {
                 }));
 
             })
-        });
+        }); */
+          return new Promise((resolve, reject) => {
+              const directoryPath = path.join(__dirname, self.migrations_path);
+              fs.readdir(directoryPath, function (err, files) {
+                  resolve(files.map(fil => {
+                  //  console.log(fil);
+                    const data = fil.split('_');
+
+                      return {id:data[0],name:fil.replace(".yaml", "")};
+                  }));
+
+              })
+          });
+
+
 
     }
 
@@ -1040,7 +1054,18 @@ export default class Migrator {
          this functions inserts migrations to db
          and tries to execute them
          */
-this.getMigrationFiles();
+this.getMigrationFiles().then(fileList => {
+
+fileList.sort(function(a, b) {
+  // Compare the 2 dates
+  if (a.id < b.id) return -1;
+  if (a.id > b.id) return 1;
+  return 0;
+})
+
+
+  console.log(fileList);
+})
 
     }
 };
