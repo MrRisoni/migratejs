@@ -1066,10 +1066,15 @@ export default class Migrator {
         console.log('diff'); */
         const diffs = _.difference(cleanFiles, res[1]);
         diffs.forEach(diff => {
-          self.insertMigration(diff).then(foo => {});
+          self.insertMigration(diff).then(foo => {
+
+//self.executeMigrations();
+          });
         })
+
+
             // self.insertMigration(_.difference(res[0], res[1])[0]).then(foo => {
-                // self.executeMigrations();
+                //
           //   })
          })
 
