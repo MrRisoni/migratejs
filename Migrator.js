@@ -903,10 +903,9 @@ export default class Migrator {
             self.MigrationModel.findAll({
                 where: {
                     processed: 1
-                }
+                },
+                order: [["id", "ASC"]]
             }).then(res => {
-                console.log('sql result');
-                //  console.log(res.map(rs => {return rs.fileName}));
                 resolve(res.map(rs => {
                     return rs.fileName
                 }));
@@ -1047,15 +1046,33 @@ export default class Migrator {
 
     refreshDB()
     {
+      const self = this;
       /* say many devs are working on the same project
          one dev will pull all the migration files from db
          but his copy of db will not have the migrations
          this functions inserts migrations to db
          and tries to execute them
          */
-this.getMigrationFiles().then(fileList => {
-  console.log(fileList);
-})
+         Promise.all([this.getMigrationFiles(), this.getAllMigrationNamesFromDB()]).then(res => {
+
+        const cleanFiles = res[0].map(fil => {return fil.name});
+      /*  console.log('cleanFiles');
+
+        console.log(cleanFiles);
+        console.log('sql');
+        console.log(res[1]);
+
+        console.log(cleanFiles);
+        console.log('diff'); */
+        const diffs = _.difference(cleanFiles, res[1]);
+        diffs.forEach(diff => {
+          self.insertMigration(diff).then(foo => {});
+        })
+            // self.insertMigration(_.difference(res[0], res[1])[0]).then(foo => {
+                // self.executeMigrations();
+          //   })
+         })
+
 
     }
 };
