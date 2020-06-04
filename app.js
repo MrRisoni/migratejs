@@ -1,7 +1,7 @@
 import Migrator from './Migrator'
 
 const migr = new Migrator("./.env.yml");
-let chosenDb = "development";
+let chosenDb = "mysqldb";
 
 migr.setUpDB(chosenDb);
 console.log("log args");

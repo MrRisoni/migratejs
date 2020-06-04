@@ -295,9 +295,36 @@ export default class Migrator {
                             this.update(res.fileName);
                         });
                     } else if (data.drop_index === 1) {
-                        this.connection.query("DROP INDEX " + data.index_name + " ON " + data.table_name).then(success => {
-                            this.update(res.fileName);
-                        });
+
+
+                              // store for rollback
+                              const q = " SHOW INDEX FROM " + data.table_name + " WHERE Key_name = '" + data.index_name +  "'";
+                              console.log(q);
+                              this.connection.query(q, {type: Sequelize.QueryTypes.SELECT}).then(resIdx => {
+                                console.log(res);
+
+                                const ymlOldType = {
+                                    drop_index: 1,
+                                    name: 'rlbk_' + res.fileName,
+                                    table_name: data.table_name,
+                                    title: data.index_name,
+                                    column: resIdx[0].Column_name
+                                }
+
+                                this.writeRollBackMigrationFile({
+                                    filename: 'rlbk_' + res.fileName,
+                                    contents: yaml.safeDump(ymlOldType)
+                                }).then(writeRblk => {
+                                  this.connection.query("DROP INDEX " + data.index_name + " ON " + data.table_name).then(success => {
+                                        this.update(res.fileName);
+                                    });
+                                })
+
+
+                              });
+
+
+
                     } else if (data.change_column_type === 1) {
 
 
