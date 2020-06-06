@@ -28,24 +28,23 @@ export default class Migrator {
   }
 
   init() {
-
-
-  const createMigrationsTableSQL = '  CREATE TABLE `migrations` (   \
+    const createMigrationsTableSQL =
+      "  CREATE TABLE `migrations` (   \
                         `id` bigint UNSIGNED NOT NULL,  \
                         `file_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL, \
                         `processed` tinyint UNSIGNED NOT NULL DEFAULT 0, \
                         `created_at` datetime DEFAULT CURRENT_TIMESTAMP, \
                         `updated_at` datetime DEFAULT CURRENT_TIMESTAMP \
-                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8; ';
+                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8; ";
 
-
-const uniqueIdxSQL = '  ALTER TABLE `migrations`  \
+    const uniqueIdxSQL =
+      "  ALTER TABLE `migrations`  \
                         MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \
                         ADD PRIMARY KEY (`id`),  \
-                        ADD UNIQUE KEY `file_name` (`file_name`); ';
+                        ADD UNIQUE KEY `file_name` (`file_name`); ";
 
     this.connection.query(createMigrationsTableSQL).then(res => {
-        this.connection.query(uniqueIdxSQL)
+      this.connection.query(uniqueIdxSQL);
     });
   }
 
@@ -285,6 +284,71 @@ const uniqueIdxSQL = '  ALTER TABLE `migrations`  \
     });
   }
 
+  createTableMigration(data, res) {
+    const selbst = this;
+    return new Promise((resolve, reject) => {
+      let prefix = data.prefix + "_";
+      let pKey = prefix + "id";
+      let pKeysList = [pKey];
+      let quote = dialects.getQuotes(this.dialect);
+
+      let columnsSQL = [dialects.getPrimaryKey(this.dialect, pKey, data)];
+
+      data.columns.forEach((item, i) => {
+        if (item.primary) {
+          pKeysList.push(prefix + item.title);
+        }
+        columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
+      });
+
+      if (data.created_at) {
+        columnsSQL.push(dialects.createdAt(this.dialect, prefix));
+      }
+      if (data.updated_at) {
+        columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
+      }
+
+      columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
+
+      let createSQL =
+        " CREATE TABLE " +
+        data.table_name +
+        " ( " +
+        columnsSQL.join(",") +
+        ") ";
+
+      if (typeof data.engine !== "undefined") {
+        createSQL += " ENGINE =  " + data.engine;
+      }
+      if (typeof data.comment !== "undefined" && data.comment.length > 0) {
+        createSQL += " COMMENT '" + data.comment + "'";
+      }
+
+      //console.log(createSQL);
+
+      //  console.log(res.id + " " + res.fileName);
+
+      this.connection
+        .query(createSQL)
+        .then(successCreate => {
+          selbst
+            .update(res.fileName)
+            .then(successUpd => {
+              resolve();
+            })
+            .catch(errUpd => {
+              console.log(errUpd);
+              reject();
+            });
+        })
+        .catch(errCreate => {
+          console.log(errCreate);
+
+          reject();
+        });
+    });
+  }
+
   executeMigrations() {
     const self = this;
 
@@ -513,53 +577,7 @@ const uniqueIdxSQL = '  ALTER TABLE `migrations`  \
                 console.log(err1);
               });
           } else if (data.create_table === 1) {
-            console.log(data);
-            let pKey = prefix + "id";
-            let pKeysList = [pKey];
-            let quote = dialects.getQuotes(this.dialect);
-
-            let columnsSQL = [dialects.getPrimaryKey(this.dialect, pKey, data)];
-
-            data.columns.forEach((item, i) => {
-              if (item.primary) {
-                pKeysList.push(prefix + item.title);
-              }
-              columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
-            });
-
-            if (data.created_at) {
-              columnsSQL.push(dialects.createdAt(this.dialect, prefix));
-            }
-            if (data.updated_at) {
-              columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
-            }
-
-            columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
-
-            let createSQL =
-              " CREATE TABLE " +
-              data.table_name +
-              " ( " +
-              columnsSQL.join(",") +
-              ") ";
-
-            if (typeof data.engine !== "undefined") {
-              createSQL += " ENGINE =  " + data.engine;
-            }
-            if (
-              typeof data.comment !== "undefined" &&
-              data.comment.length > 0
-            ) {
-              createSQL += " COMMENT '" + data.comment + "'";
-            }
-
-            //console.log(createSQL);
-
-            //  console.log(res.id + " " + res.fileName);
-
-            this.connection.query(createSQL).then(success => {
-              this.update(res.fileName);
-            });
+            self.createTableMigration(data, res);
           }
         });
       } else {
