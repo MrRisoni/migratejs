@@ -218,6 +218,7 @@ export default class Migrator {
     }
 
     update(migrationFile) {
+      console.log('updated migr ' + migrationFile)
         this.connection
             .query(
                 "UPDATE migrations SET processed = 1, updated_at = NOW() " +
@@ -276,14 +277,14 @@ export default class Migrator {
         }).then(results => {
             if (results.length > 0) {
                 results.forEach(res => {
-                    console.log(res.fileName);
+                    console.log('EXECUTING ' + res.fileName);
                     let fileContents = fs.readFileSync(
                         `./${this.migrations_path}/${res.fileName}.yaml`,
                         "utf8"
                     );
                     let data = yaml.safeLoad(fileContents);
                     let prefix = data.prefix + "_";
-                    console.log(data);
+                  //  console.log(data);
                     const to_table = data.table_name;
 
                     if (data.drop_tables) {
@@ -505,9 +506,9 @@ export default class Migrator {
                         }
 
 
-                        console.log(createSQL);
+                        //console.log(createSQL);
 
-                        console.log(res.id + " " + res.fileName);
+                      //  console.log(res.id + " " + res.fileName);
 
                         this.connection.query(createSQL).then(success => {
                             this.update(res.fileName)
@@ -1055,28 +1056,31 @@ export default class Migrator {
          */
          Promise.all([this.getMigrationFiles(), this.getAllMigrationNamesFromDB()]).then(res => {
 
-        const cleanFiles = res[0].map(fil => {return fil.name});
-      /*  console.log('cleanFiles');
+              const cleanFiles = res[0].map(fil => {return fil.name});
+            /*  console.log('cleanFiles');
 
-        console.log(cleanFiles);
-        console.log('sql');
-        console.log(res[1]);
+              console.log(cleanFiles);
+              console.log('sql');
+              console.log(res[1]);
 
-        console.log(cleanFiles);
-        console.log('diff'); */
-        const diffs = _.difference(cleanFiles, res[1]);
-        diffs.forEach(diff => {
-          self.insertMigration(diff).then(foo => {
+              console.log(cleanFiles);
+              console.log('diff'); */
+              const diffs = _.difference(cleanFiles, res[1]);
+              let insertPromiseArr = [];
+              diffs.forEach(diff => {
+                console.log('Inserting diff ' + diff);
+                insertPromiseArr.push(self.insertMigration(diff));
+                //  self.insertMigration(diff).then(foo => {
+              //    });
+              });
 
-//self.executeMigrations();
-          });
-        })
+              console.log('promise all exec');
+              Promise.all(insertPromiseArr).then(resIns=> {
+                console.log('Trying to executing migrations');
+                self.executeMigrations();
+              });
 
-
-            // self.insertMigration(_.difference(res[0], res[1])[0]).then(foo => {
-                //
-          //   })
-         })
+         });
 
 
     }
