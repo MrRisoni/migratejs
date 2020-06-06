@@ -4,8 +4,11 @@ medium text
 float
 double
 varchar charset
+date field
+time
+datetime
 
+postgres rollback
 
-update migration based on files
 
 README.md

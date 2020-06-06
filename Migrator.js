@@ -27,6 +27,28 @@ export default class Migrator {
     ];
   }
 
+  init() {
+
+
+  const createMigrationsTableSQL = '  CREATE TABLE `migrations` (   \
+                        `id` bigint UNSIGNED NOT NULL,  \
+                        `file_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL, \
+                        `processed` tinyint UNSIGNED NOT NULL DEFAULT 0, \
+                        `created_at` datetime DEFAULT CURRENT_TIMESTAMP, \
+                        `updated_at` datetime DEFAULT CURRENT_TIMESTAMP \
+                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8; ';
+
+
+const uniqueIdxSQL = '  ALTER TABLE `migrations`  \
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \
+                        ADD PRIMARY KEY (`id`),  \
+                        ADD UNIQUE KEY `file_name` (`file_name`); ';
+
+    this.connection.query(createMigrationsTableSQL).then(res => {
+        this.connection.query(uniqueIdxSQL)
+    });
+  }
+
   setUpDB(dbOption) {
     try {
       const projectSettings = yaml.safeLoad(
