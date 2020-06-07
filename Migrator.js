@@ -284,6 +284,23 @@ export default class Migrator {
     });
   }
 
+ dropTableMigration(data, res)
+ {
+
+   const selbst = this;
+   return new Promise((resolve, reject) => {
+
+     console.log("Dropping table");
+     const dropSQL = "DROP  TABLE " + data.tables[0];
+     console.log(dropSQL);
+
+     selbst.connection.query(dropSQL).then(success => {
+       selbst.update(res.fileName);
+     });
+
+     });
+ }
+
   createTableMigration(data, res) {
     const selbst = this;
     return new Promise((resolve, reject) => {
@@ -324,10 +341,6 @@ export default class Migrator {
         createSQL += " COMMENT '" + data.comment + "'";
       }
 
-      //console.log(createSQL);
-
-      //  console.log(res.id + " " + res.fileName);
-
       selbst.connection
         .query(createSQL)
         .then(successCreate => {
@@ -341,7 +354,6 @@ export default class Migrator {
               console.log(errUpd);
               reject();
             });
-
 
         })
         .catch(errCreate => {
@@ -374,13 +386,8 @@ export default class Migrator {
           const to_table = data.table_name;
 
           if (data.drop_tables) {
-            console.log("Dropping table");
-            const dropSQL = "DROP  TABLE " + data.tables[0];
-            console.log(dropSQL);
-
-            this.connection.query(dropSQL).then(success => {
-              this.update(res.fileName);
-            });
+            this.dropTableMigration(data,res);
+            
           } else if (data.drop_index === 1) {
             // store for rollback
             const q =
