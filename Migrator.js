@@ -239,7 +239,7 @@ export default class Migrator {
 
   update(migrationFile) {
     console.log("updated migr " + migrationFile);
-    this.connection
+    return this.connection
       .query(
         "UPDATE migrations SET processed = 1, updated_at = NOW() " +
           " WHERE file_name = '" +
@@ -328,9 +328,10 @@ export default class Migrator {
 
       //  console.log(res.id + " " + res.fileName);
 
-      this.connection
+      selbst.connection
         .query(createSQL)
         .then(successCreate => {
+
           selbst
             .update(res.fileName)
             .then(successUpd => {
@@ -340,6 +341,8 @@ export default class Migrator {
               console.log(errUpd);
               reject();
             });
+
+
         })
         .catch(errCreate => {
           console.log(errCreate);
