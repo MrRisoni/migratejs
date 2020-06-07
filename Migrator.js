@@ -284,6 +284,33 @@ export default class Migrator {
     });
   }
 
+
+  addIndexMigration(data,res) {
+
+    const selbst = this;
+    return new Promise((resolve, reject) => {
+
+  console.log("creating index");
+  let cols = data.columns.map(col => {
+    return col.title;
+  });
+  let to_table = data.table;
+
+  let indexSQL = "CREATE ";
+  if (data.unique) {
+    indexSQL += " UNIQUE ";
+  }
+  indexSQL += " INDEX " + data.name + " ON " + to_table;
+  indexSQL += " ( " + cols.join(",") + ")";
+  console.log(indexSQL);
+  selbst.connection.query(indexSQL).then(success => {
+    selbst.update(res.fileName);
+  });
+
+    });
+}
+
+
  dropTableMigration(data, res)
  {
 
@@ -387,7 +414,7 @@ export default class Migrator {
 
           if (data.drop_tables) {
             this.dropTableMigration(data,res);
-            
+
           } else if (data.drop_index === 1) {
             // store for rollback
             const q =
@@ -530,22 +557,7 @@ export default class Migrator {
                 });
               });
           } else if (data.create_index === 1) {
-            console.log("creating index");
-            let cols = data.columns.map(col => {
-              return col.title;
-            });
-            let to_table = data.table;
-
-            let indexSQL = "CREATE ";
-            if (data.unique) {
-              indexSQL += " UNIQUE ";
-            }
-            indexSQL += " INDEX " + data.name + " ON " + to_table;
-            indexSQL += " ( " + cols.join(",") + ")";
-            console.log(indexSQL);
-            this.connection.query(indexSQL).then(success => {
-              self.update(res.fileName);
-            });
+            this.addIndexMigration(data, res)
           } else if (data.create_fkey === 1) {
             // create new column
             const addColSQL =

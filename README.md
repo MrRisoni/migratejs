@@ -46,6 +46,35 @@ columns:
     primary:true
 ```
 
+
+Adding columns
+
+
+Renaming columns
+
+
+Changing column definition
+
+
+Adding unique index
+
+
+Adding index
+
+
+Adding  foreign key
+
+
+Drop index
+
+Drop column
+
+Drop table
+
+Rollback
+
+Update db with migration from version control
+
 node app AddColumnsToUser email:string passwd:string
 
 node app RenameColumnInusers passwd:hash_passwd
