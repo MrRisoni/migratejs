@@ -1,0 +1,6 @@
+rename_columns: 1
+name: migration20200608_122119_RenameColumnInusers
+table_name: users
+columns:
+  - from: usr_passwd
+    to: hash_passwd

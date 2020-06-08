@@ -275,7 +275,6 @@ export default class Migrator {
   addIndexMigration(data,res) {
 
     const selbst = this;
-    return new Promise((resolve, reject) => {
 
   console.log("creating index");
   let cols = data.columns.map(col => {
@@ -290,19 +289,14 @@ export default class Migrator {
   indexSQL += " INDEX " + data.name + " ON " + to_table;
   indexSQL += " ( " + cols.join(",") + ")";
   console.log(indexSQL);
-  selbst.connection.query(indexSQL).then(success => {
-    selbst.update(res.fileName);
-  });
+  return  selbst.connection.query(indexSQL)
 
-    });
+
 }
 
 
  dropTableMigration(data, res)
  {
-
-   const selbst = this;
-   return new Promise((resolve, reject) => {
 
      console.log("Dropping table");
      const dropSQL = "DROP  TABLE " + data.tables[0];
@@ -310,7 +304,6 @@ export default class Migrator {
 
      return selbst.connection.query(dropSQL);
 
-     });
  }
 
  addColumnMigration(data,res){
@@ -338,7 +331,7 @@ export default class Migrator {
        let alterSQL =
          " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
        console.log(alterSQL);
-       return selbst.connection.query(alterSQL).
+       return selbst.connection.query(alterSQL);
      });
 
  }
@@ -346,7 +339,6 @@ export default class Migrator {
 
   changeColumnMigration(data, res) {
     const selbst = this;
-    return new Promise((resolve,reject) => {
     selbst.getPrefixOrigin(data.table_name).then(dt => {
       let prfx = dt;
       console.log("prfx " + prfx);
@@ -383,13 +375,12 @@ export default class Migrator {
             return selbst.this.connection.query(modifySQL)
         });
       });
-    });
+
     })
   }
 
   createTableMigration(data, res) {
     const selbst = this;
-    return new Promise((resolve, reject) => {
       let prefix = data.prefix + "_";
       let pKey = prefix + "id";
       let pKeysList = [pKey];
@@ -427,27 +418,8 @@ export default class Migrator {
         createSQL += " COMMENT '" + data.comment + "'";
       }
 
-      selbst.connection
-        .query(createSQL)
-        .then(successCreate => {
+      return selbst.connection.query(createSQL);
 
-          selbst
-            .update(res.fileName)
-            .then(successUpd => {
-              resolve();
-            })
-            .catch(errUpd => {
-              console.log(errUpd);
-              reject();
-            });
-
-        })
-        .catch(errCreate => {
-          console.log(errCreate);
-
-          reject();
-        });
-    });
   }
 
   removeColumnMigration(data) {
@@ -463,6 +435,46 @@ export default class Migrator {
     return   this.connection.query(changeSQL);
   }
 
+  renameColumnMigration(data)
+  {
+    console.log(" rename cols ");
+    const self = this;
+
+    return new Promise((resolve,reject) => {
+    this.connection
+      .query("SHOW COLUMNS FROM " + data.table_name)
+      .then(cols => {
+        console.log(cols[0]);
+        let colObj = cols[0].filter(clitm => {
+          return clitm.Field === data.columns[0].from;
+        });
+        console.log("Col obj");
+        console.log(colObj);
+        if (colObj.length ==0) {
+          console.log('No such column');
+        }
+        const changeSQL =
+          "ALTER TABLE " +
+          data.table_name +
+          " CHANGE " +
+          data.columns[0].from +
+          " " +
+          data.columns[0].to +
+          " " +
+          colObj[0].Type;
+
+        console.log(changeSQL);
+        self.connection.query(changeSQL).then(res => {
+          resolve();
+        });
+      })
+      .catch(err2 => {
+        console.log('err2')
+        console.log(err2);
+        reject();
+      });
+});
+  }
 
   executeMigrations() {
     const self = this;
@@ -528,35 +540,7 @@ export default class Migrator {
           } else if (data.remove_columns === 1) {
               migrationFunction = this.removeColumnMigration(data);
           } else if (data.rename_columns === 1) {
-            console.log(" rename cols ");
-
-            this.connection
-              .query("SHOW COLUMNS FROM " + to_table)
-              .then(cols => {
-                console.log(cols[0]);
-                let colObj = cols[0].filter(clitm => {
-                  return clitm.Field === data.columns[0].from;
-                });
-                console.log("Col obj");
-                console.log(colObj);
-                const changeSQL =
-                  "ALTER TABLE " +
-                  to_table +
-                  " CHANGE " +
-                  data.columns[0].from +
-                  " " +
-                  data.columns[0].to +
-                  " " +
-                  colObj[0].Type;
-
-                console.log(changeSQL);
-                this.connection.query(changeSQL).then(success => {
-                  this.update(res.fileName);
-                });
-              })
-              .catch(err => {
-                console.log(err);
-              });
+              migrationFunction = this.renameColumnMigration(data)
           } else if (data.add_columns) {
             this.addColumnMigration(data,res);
           } else if (data.create_index === 1) {

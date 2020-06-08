@@ -11,4 +11,7 @@ datetime
 postgres rollback
 
 
+migrationfunctions
+return promise for erroring
+
 README.md
