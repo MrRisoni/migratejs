@@ -54,6 +54,17 @@ Renaming columns
 
 
 Changing column definition
+./node_modules/@babel/node/bin/babel-node.js app ChangeTypeIn_threads downvotes:int
+
+
+```
+change_column_type: 1
+name: migration20200608_113119_ChangeTypeIn_threads
+table_name: threads
+columns:
+  - title: downvotes
+    to: int
+```
 
 
 Adding unique index

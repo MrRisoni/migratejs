@@ -270,19 +270,6 @@ export default class Migrator {
     });
   }
 
-  runGenericQuery(sql) {
-    return new Promise((resolve, reject) => {
-      this.connection
-        .query(sql, { type: Sequelize.QueryTypes.RAW })
-        .then(rows => {
-          resolve({ proceed: true });
-        })
-        .catch(err => {
-          console.log(err);
-          reject({ proceed: false });
-        });
-    });
-  }
 
 
   addIndexMigration(data,res) {
@@ -327,6 +314,82 @@ export default class Migrator {
 
      });
  }
+
+ addColumnMigration(data,res){
+
+   const selbst = this;
+   return new Promise((resolve, reject) => {
+
+   const to_table = data.table_name;
+   // get prefix
+   console.log("Add Cols");
+   this.connection
+     .query("SHOW COLUMNS FROM " + to_table)
+     .then(cols => {
+       const first_col = cols[0][0].Field;
+       let prfx = first_col.split("_")[0];
+       if (prfx.length > 0) {
+         prfx += "_";
+       }
+       console.log(prfx);
+       let columnsSQL = [];
+       data.columns.forEach((item, i) => {
+         columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
+       });
+       console.log(columnsSQL);
+
+       let alterSQL =
+         " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
+       console.log(alterSQL);
+       selbst.connection.query(alterSQL).then(success => {
+         selbst.update(res.fileName);
+       });
+     });
+   });
+ }
+
+
+  changeColumnMigration(data, res) {
+    this.getPrefixOrigin(data.table_name).then(dt => {
+      let prfx = dt;
+      console.log("prfx " + prfx);
+      // get original type
+      // write rollback backup migration file
+      this.getColType(
+        data.table_name,
+        prfx + data.columns[0].title
+      ).then(oldTypeRes => {
+        console.log("old type");
+        console.log(oldTypeRes[0]);
+
+        const ymlOldType = {
+          change_column_type: 1,
+          name: "rlbk_" + res.fileName,
+          table_name: data.table_name,
+          title: prfx + data.columns[0].title,
+          was: oldTypeRes[0].Type
+        };
+
+        this.writeRollBackMigrationFile({
+          filename: "rlbk_" + res.fileName,
+          contents: yaml.safeDump(ymlOldType)
+        }).then(writeRblk => {
+          const modifySQL =
+            "ALTER TABLE " +
+            data.table_name +
+            " MODIFY COLUMN  " +
+            prfx +
+            data.columns[0].title +
+            " " +
+            data.columns[0].to.toUpperCase();
+          console.log(modifySQL);
+          this.connection.query(modifySQL).then(success => {
+            this.update(res.fileName);
+          });
+        });
+      });
+    });
+  }
 
   createTableMigration(data, res) {
     const selbst = this;
@@ -451,45 +514,7 @@ export default class Migrator {
                 });
               });
           } else if (data.change_column_type === 1) {
-            this.getPrefixOrigin(data.table_name).then(dt => {
-              let prfx = dt;
-              console.log("prfx " + prfx);
-              // get original type
-              // write rollback backup migration file
-              this.getColType(
-                data.table_name,
-                prfx + data.columns[0].title
-              ).then(oldTypeRes => {
-                console.log("old type");
-                console.log(oldTypeRes[0]);
-
-                const ymlOldType = {
-                  change_column_type: 1,
-                  name: "rlbk_" + res.fileName,
-                  table_name: data.table_name,
-                  title: prfx + data.columns[0].title,
-                  was: oldTypeRes[0].Type
-                };
-
-                this.writeRollBackMigrationFile({
-                  filename: "rlbk_" + res.fileName,
-                  contents: yaml.safeDump(ymlOldType)
-                }).then(writeRblk => {
-                  const modifySQL =
-                    "ALTER TABLE " +
-                    data.table_name +
-                    " MODIFY COLUMN  " +
-                    prfx +
-                    data.columns[0].title +
-                    " " +
-                    data.columns[0].to.toUpperCase();
-                  console.log(modifySQL);
-                  this.connection.query(modifySQL).then(success => {
-                    this.update(res.fileName);
-                  });
-                });
-              });
-            });
+            this.changeColumnMigration(data, res)
           } else if (data.remove_columns === 1) {
             console.log(" rename cols ");
 
@@ -531,31 +556,7 @@ export default class Migrator {
                 console.log(err);
               });
           } else if (data.add_columns) {
-            const to_table = data.table_name;
-            // get prefix
-            console.log("Add Cols");
-            this.connection
-              .query("SHOW COLUMNS FROM " + to_table)
-              .then(cols => {
-                const first_col = cols[0][0].Field;
-                let prfx = first_col.split("_")[0];
-                if (prfx.length > 0) {
-                  prfx += "_";
-                }
-                console.log(prfx);
-                let columnsSQL = [];
-                data.columns.forEach((item, i) => {
-                  columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
-                });
-                console.log(columnsSQL);
-
-                let alterSQL =
-                  " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-                console.log(alterSQL);
-                this.connection.query(alterSQL).then(success => {
-                  this.update(res.fileName);
-                });
-              });
+            this.addColumnMigration(data,res);
           } else if (data.create_index === 1) {
             this.addIndexMigration(data, res)
           } else if (data.create_fkey === 1) {
