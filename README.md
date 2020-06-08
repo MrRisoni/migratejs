@@ -80,6 +80,15 @@ Drop index
 
 Drop column
 
+./node_modules/@babel/node/bin/babel-node.js app.js RemoveColumnsFromusers usr_ban
+```
+remove_columns: 1
+name: migration20200608_114147_RemoveColumnsFromusers
+table_name: users
+columns:
+  - usr_ban
+```
+
 Drop table
 
 Rollback

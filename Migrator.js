@@ -238,7 +238,7 @@ export default class Migrator {
   }
 
   update(migrationFile) {
-    console.log("updated migr " + migrationFile);
+    console.log("Registering " + migrationFile + " as complete");
     return this.connection
       .query(
         "UPDATE migrations SET processed = 1, updated_at = NOW() " +
@@ -308,9 +308,7 @@ export default class Migrator {
      const dropSQL = "DROP  TABLE " + data.tables[0];
      console.log(dropSQL);
 
-     selbst.connection.query(dropSQL).then(success => {
-       selbst.update(res.fileName);
-     });
+     return selbst.connection.query(dropSQL);
 
      });
  }
@@ -318,7 +316,6 @@ export default class Migrator {
  addColumnMigration(data,res){
 
    const selbst = this;
-   return new Promise((resolve, reject) => {
 
    const to_table = data.table_name;
    // get prefix
@@ -341,21 +338,21 @@ export default class Migrator {
        let alterSQL =
          " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
        console.log(alterSQL);
-       selbst.connection.query(alterSQL).then(success => {
-         selbst.update(res.fileName);
-       });
+       return selbst.connection.query(alterSQL).
      });
-   });
+
  }
 
 
   changeColumnMigration(data, res) {
-    this.getPrefixOrigin(data.table_name).then(dt => {
+    const selbst = this;
+    return new Promise((resolve,reject) => {
+    selbst.getPrefixOrigin(data.table_name).then(dt => {
       let prfx = dt;
       console.log("prfx " + prfx);
       // get original type
       // write rollback backup migration file
-      this.getColType(
+      selbst.getColType(
         data.table_name,
         prfx + data.columns[0].title
       ).then(oldTypeRes => {
@@ -370,7 +367,7 @@ export default class Migrator {
           was: oldTypeRes[0].Type
         };
 
-        this.writeRollBackMigrationFile({
+        selbst.writeRollBackMigrationFile({
           filename: "rlbk_" + res.fileName,
           contents: yaml.safeDump(ymlOldType)
         }).then(writeRblk => {
@@ -383,12 +380,11 @@ export default class Migrator {
             " " +
             data.columns[0].to.toUpperCase();
           console.log(modifySQL);
-          this.connection.query(modifySQL).then(success => {
-            this.update(res.fileName);
-          });
+            return selbst.this.connection.query(modifySQL)
         });
       });
     });
+    })
   }
 
   createTableMigration(data, res) {
@@ -454,6 +450,20 @@ export default class Migrator {
     });
   }
 
+  removeColumnMigration(data) {
+    console.log(" rename cols ");
+
+    const changeSQL =
+      "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
+
+    console.log(changeSQL);
+  //  this.connection.query(changeSQL).then(success => {
+    //  this.update(res.fileName);
+//    });
+    return   this.connection.query(changeSQL);
+  }
+
+
   executeMigrations() {
     const self = this;
 
@@ -470,14 +480,14 @@ export default class Migrator {
             `./${this.migrations_path}/${res.fileName}.yaml`,
             "utf8"
           );
+          let migrationFunction =null;
           let data = yaml.safeLoad(fileContents);
           let prefix = data.prefix + "_";
           //  console.log(data);
           const to_table = data.table_name;
 
           if (data.drop_tables) {
-            this.dropTableMigration(data,res);
-
+            migrationFunction  = this.dropTableMigration(data);
           } else if (data.drop_index === 1) {
             // store for rollback
             const q =
@@ -514,17 +524,9 @@ export default class Migrator {
                 });
               });
           } else if (data.change_column_type === 1) {
-            this.changeColumnMigration(data, res)
+            migrationFunction = this.changeColumnMigration(data)
           } else if (data.remove_columns === 1) {
-            console.log(" rename cols ");
-
-            const changeSQL =
-              "ALTER TABLE " + to_table + " DROP COLUMN " + data.columns[0];
-
-            console.log(changeSQL);
-            this.connection.query(changeSQL).then(success => {
-              this.update(res.fileName);
-            });
+              migrationFunction = this.removeColumnMigration(data);
           } else if (data.rename_columns === 1) {
             console.log(" rename cols ");
 
@@ -558,7 +560,7 @@ export default class Migrator {
           } else if (data.add_columns) {
             this.addColumnMigration(data,res);
           } else if (data.create_index === 1) {
-            this.addIndexMigration(data, res)
+            migrationFunction = this.addIndexMigration(data)
           } else if (data.create_fkey === 1) {
             // create new column
             const addColSQL =
@@ -600,8 +602,12 @@ export default class Migrator {
                 console.log(err1);
               });
           } else if (data.create_table === 1) {
-            self.createTableMigration(data, res);
+            migrationFunction = self.createTableMigration(data);
           }
+
+          migrationFunction.then(migrRes => {
+             this.update(res.fileName);
+          })
         });
       } else {
         console.log("Nothing to migrate");
