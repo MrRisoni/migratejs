@@ -498,17 +498,29 @@ export default class Migrator {
           );
           let data = yaml.safeLoad(fileContents);
           if (data.create_table ==1) {
-            migrationFunction = self.actionA();
+            migrationFunction = migration_helpers.actionA();
           }else if (data.add_columns) {
-            migrationFunction = self.actionB();
+            migrationFunction = migration_helpers.actionB();
           }else if (data.rename_columns === 1) {
-            migrationFunction = self.actionC();
+            migrationFunction = migration_helpers.actionC();
           }else if (data.remove_columns === 1) {
-            migrationFunction = self.actionD();
+            migrationFunction = migration_helpers.actionD();
           }
 
           return migrationFunction;
-       })
+       });
+
+       console.log('Promise all begin');
+       //Promise.all(promiseArr).then(resPromiseAllen => {
+      //   console.log(resPromiseAllen);
+      // })
+      Promise.mapSeries(promiseArr, (rpm, indx_rpm) => {
+
+      }).then(promiseAllen => {
+        console.log(resPromiseAllen);
+      })
+
+
     })
   }
 
