@@ -124,9 +124,7 @@ import Sequelize from "sequelize";
     const migrName = migrFuncArgs.migrName;
     console.log('Running  ' + migrName);
 
-
-
-    // this is buggy
+    // this is buggy  !!!!!
     const selbst = this;
 
     const to_table = data.table_name;
@@ -148,7 +146,7 @@ import Sequelize from "sequelize";
  
         let alterSQL =
           " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-       // console.log(alterSQL);
+        console.log(alterSQL);
         return conn.query(alterSQL);
       });
   

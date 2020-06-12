@@ -354,12 +354,14 @@ export default class Migrator {
  
 
 
-  executeMigrations()
+  async executeMigrations()
   {
     const self = this;
     let migrationFunction = null;
     let  migrFuncArgs = {};
     console.log('executeMigrations');
+
+    
     this.get_pending_res_migrs().then(res => {
        let promiseArr = res.map(migrRow => {
         //  console.log(migrRow.fileName);
@@ -371,26 +373,37 @@ export default class Migrator {
           migrFuncArgs = {data:data, dialect: self.dialect, conn: self.connection, migrName: migrRow.fileName};
 
           if (data.create_table ==1) {
-            migrationFunction = migration_helpers.createTableMigration(data, self.dialect,self.connection, migrRow.fileName);
+            migrationFunction = migration_helpers.createTableMigration;
           }else if (data.add_columns) {
-            migrationFunction = migration_helpers.addColumnMigration(migrFuncArgs);
+           migrationFunction = migration_helpers.addColumnMigration;
           }else if (data.rename_columns === 1) {
-            migrationFunction = migration_helpers.renameColumnMigration(migrFuncArgs);
+            migrationFunction = migration_helpers.renameColumnMigration;
           }else if (data.remove_columns === 1) {
-            migrationFunction = migration_helpers.removeColumnMigration(migrFuncArgs);
+             migrationFunction = migration_helpers.removeColumnMigration;
           }
 
           return migrationFunction;
+            
        });
 
+
        console.log('Promise all begin');
-      BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
-          console.log(indx_prms);
-          return prmsFnc;
-      }).then(resPromiseAllen => {
-        console.log('AllMigrations Finished!')
+       console.log(promiseArr.length);
+       
+       const starterPromise = Promise.resolve(null);
+const log            = result => console.log(result);
+await promiseArr.reduce(
+  (p, spec) => p.then(() => runTask(spec).then(log)),
+  starterPromise
+);
+
+       //BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
+      //    console.log(indx_prms);
+      //    return prmsFnc;
+     // }).then(resPromiseAllen => {
+     //   console.log('AllMigrations Finished!')
       //  console.log(resPromiseAllen);
-      });
+    ///  });
 
 
     });
