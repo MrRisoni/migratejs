@@ -1,8 +1,8 @@
-import * as dialects from "./sql_dialects";
-import Sequelize from "sequelize";
+const Sequelize = require('Sequelize');
+const dialects = require('./sql_dialects');
 
 
-export function createTableMigration(data, dbType, connection, migrationName) {
+function createTableMigration(data, dbType, connection, migrationName) {
     console.log('Running  ' + migrationName);
     const selbst = this;
     let prefix = data.prefix + "_";
@@ -115,7 +115,7 @@ function makeColumnSQL(col, prefix, add = 0, quote = "`") {
 }
 
 
-export function addColumnMigration(migrFuncArgs) {
+function addColumnMigration(migrFuncArgs) {
 
     const data = migrFuncArgs.data;
     const conn = migrFuncArgs.conn;
@@ -151,7 +151,7 @@ export function addColumnMigration(migrFuncArgs) {
 }
 
 
-export function renameColumnMigration(migrFuncArgs) {
+function renameColumnMigration(migrFuncArgs) {
 
     const data = migrFuncArgs.data;
     const conn = migrFuncArgs.conn;
@@ -200,7 +200,7 @@ export function renameColumnMigration(migrFuncArgs) {
 }
 
 
-export function removeColumnMigration(migrFuncArgs) {
+function removeColumnMigration(migrFuncArgs) {
 
     const data = migrFuncArgs.data;
     const conn = migrFuncArgs.conn;

@@ -1,20 +1,20 @@
-export function createdAtPostgres(prefix) {
+ function createdAtPostgres(prefix) {
   return prefix + "created_at timestamp";
 }
 
-export function createdAtMySql(prefix) {
+ function createdAtMySql(prefix) {
   return "`" + prefix + "created_at` DATETIME";
 }
 
-export function updatedAtPostgres(prefix) {
+ function updatedAtPostgres(prefix) {
   return prefix + "updated_at timestamp";
 }
 
-export function updatedAtMySql(prefix) {
+ function updatedAtMySql(prefix) {
   return "`" + prefix + "updated_at` DATETIME";
 }
 
-export function updatedAt(dialect, prfx) {
+ function updatedAt(dialect, prfx) {
 //  console.log("hey dialects js ");
   //console.log(prfx, dialect);
   switch (dialect) {
@@ -25,7 +25,7 @@ export function updatedAt(dialect, prfx) {
   }
 }
 
-export function getAutoIncrement(dialect, data) {
+ function getAutoIncrement(dialect, data) {
   switch (dialect) {
     case "postgres":
       return " SERIAL ";
@@ -34,7 +34,7 @@ export function getAutoIncrement(dialect, data) {
   }
 }
 
-export function getPrimaryKey(dialect, pKey, data) {
+ function getPrimaryKey(dialect, pKey, data) {
   return (
     this.getQuotes(dialect) +
     pKey +
@@ -44,11 +44,11 @@ export function getPrimaryKey(dialect, pKey, data) {
   );
 }
 
-export function getQuotes(dialect) {
+ function getQuotes(dialect) {
   return dialect === "postgres" ? "" : "`";
 }
 
-export function createdAt(dialect, prfx) {
+ function createdAt(dialect, prfx) {
   switch (dialect) {
     case "postgres":
       return createdAtPostgres(prfx);

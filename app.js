@@ -1,4 +1,5 @@
-import Migrator from "./Migrator";
+const Migrator = require('./Migrator');
+
 
 const migr = new Migrator("./.env.yml");
 let chosenDb = "mysqldb";
