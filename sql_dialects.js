@@ -15,8 +15,8 @@ export function updatedAtMySql(prefix) {
 }
 
 export function updatedAt(dialect, prfx) {
-  console.log("hey dialects js ");
-  console.log(prfx, dialect);
+//  console.log("hey dialects js ");
+  //console.log(prfx, dialect);
   switch (dialect) {
     case "postgres":
       return updatedAtPostgres(prfx);

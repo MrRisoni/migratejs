@@ -1,24 +1,5 @@
 import * as dialects from "./sql_dialects";
-
-
-   export function actionA(msg)
-   {
-    return new Promise(resolve => {
-        resolve( msg);
-    });
-   }
-
-
-
-
-   export function actionB(msg)
-   {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve( msg);
-      }, 1000);
-    });
-   }
+import Sequelize from "sequelize";
 
 
    export function createTableMigration(data, dbType, connection, migrationName) {
@@ -49,14 +30,14 @@ import * as dialects from "./sql_dialects";
 
     let createSQL =
       " CREATE TABLE " + data.table_name + " ( " + columnsSQL.join(",") + ") ";
-
+  
     if (typeof data.engine !== "undefined") {
       createSQL += " ENGINE =  " + data.engine;
     }
     if (typeof data.comment !== "undefined" && data.comment.length > 0) {
       createSQL += " COMMENT '" + data.comment + "'";
     }
-
+    console.log(createSQL);
     return connection.query(createSQL);
   }
 
@@ -64,8 +45,8 @@ import * as dialects from "./sql_dialects";
 
  function makeColumnSQL(col, prefix, add = 0, quote = "`") {
     let sql = quote + prefix + col.title + quote;
-    console.log("making comment for col ");
-    console.log(col);
+    //console.log("making comment for col ");
+   // console.log(col);
     switch (col.type) {
       case "DATE":
         sql += "  " + col.type;
@@ -141,7 +122,8 @@ import * as dialects from "./sql_dialects";
     const data = migrFuncArgs.data;
     const conn = migrFuncArgs.conn;
     const migrName = migrFuncArgs.migrName;
-    
+    console.log('Running  ' + migrName);
+
 
 
     // this is buggy
@@ -149,7 +131,7 @@ import * as dialects from "./sql_dialects";
 
     const to_table = data.table_name;
     // get prefix
-    console.log("Add Cols");
+   // console.log("Add Cols");
     conn.query("SHOW COLUMNS FROM " + to_table)
       .then(cols => {
         const first_col = cols[0][0].Field;
@@ -157,16 +139,16 @@ import * as dialects from "./sql_dialects";
         if (prfx.length > 0) {
           prfx += "_";
         }
-        console.log(prfx);
+     //   console.log(prfx);
         let columnsSQL = [];
         data.columns.forEach((item, i) => {
           columnsSQL.push(makeColumnSQL(item, prfx, 1));
         });
-        console.log(columnsSQL);
+     //   console.log(columnsSQL);
  
         let alterSQL =
           " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-        console.log(alterSQL);
+       // console.log(alterSQL);
         return conn.query(alterSQL);
       });
   
@@ -176,20 +158,28 @@ import * as dialects from "./sql_dialects";
 
 
 
-  function renameColumnMigration(data) {
-    console.log(" rename cols ");
+  export function renameColumnMigration(migrFuncArgs) {
+
+    const data = migrFuncArgs.data;
+    const conn = migrFuncArgs.conn;
+    const migrName = migrFuncArgs.migrName;
+
+    console.log('Running  ' + migrName);
+
+    //console.log(" rename cols ");
     const self = this;
+    console.log("SHOW COLUMNS FROM " + data.table_name);
 
     return new Promise((resolve, reject) => {
-      self.connection
-        .query("SHOW COLUMNS FROM " + data.table_name)
+      conn
+        .query("SHOW COLUMNS FROM " + data.table_name, { type: Sequelize.QueryTypes.SELECT })
         .then(cols => {
-          console.log(cols[0]);
-          let colObj = cols[0].filter(clitm => {
+          console.log(cols);
+          let colObj = cols.filter(clitm => {
             return clitm.Field === data.columns[0].from;
           });
-          console.log("Col obj");
-          console.log(colObj);
+        console.log("Col obj");
+        //  console.log(colObj);
           if (colObj.length == 0) {
             console.log("No such column " + data.columns[0].from);
           }
@@ -203,8 +193,8 @@ import * as dialects from "./sql_dialects";
             " " +
             colObj[0].Type;
 
-          console.log(changeSQL);
-          self.connection.query(changeSQL).then(res => {
+        //  console.log(changeSQL);
+          conn.query(changeSQL).then(res => {
             resolve();
           });
         })
@@ -216,3 +206,17 @@ import * as dialects from "./sql_dialects";
     });
   }
 
+
+  export function removeColumnMigration(migrFuncArgs) {
+
+    const data = migrFuncArgs.data;
+    const conn = migrFuncArgs.conn;
+    const migrName = migrFuncArgs.migrName;
+    console.log('Running  ' + migrName);
+
+    const changeSQL =
+      "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
+
+      console.log(changeSQL);
+    return conn.query(changeSQL);
+  }

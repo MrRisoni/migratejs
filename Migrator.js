@@ -352,15 +352,6 @@ export default class Migrator {
   }
 
  
-  removeColumnMigration(data) {
-    console.log(" removing cols ");
-
-    const changeSQL =
-      "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
-
-    console.log(changeSQL);
-    return this.connection.query(changeSQL);
-  }
 
 
   executeMigrations()
@@ -371,7 +362,7 @@ export default class Migrator {
     console.log('executeMigrations');
     this.get_pending_res_migrs().then(res => {
        let promiseArr = res.map(migrRow => {
-          console.log(migrRow.fileName);
+        //  console.log(migrRow.fileName);
           let fileContents = fs.readFileSync(
             `./${this.migrations_path}/${migrRow.fileName}.yaml`,
             "utf8"
@@ -386,7 +377,7 @@ export default class Migrator {
           }else if (data.rename_columns === 1) {
             migrationFunction = migration_helpers.renameColumnMigration(migrFuncArgs);
           }else if (data.remove_columns === 1) {
-            migrationFunction = migration_helpers.actionB(migrFuncArgs);
+            migrationFunction = migration_helpers.removeColumnMigration(migrFuncArgs);
           }
 
           return migrationFunction;
@@ -665,7 +656,7 @@ export default class Migrator {
     const migrationName = "migration" + stamp + "_" + ref;
 
     let to_table = ref.replace("AddIndexTo_", "");
-    console.log(to_table);
+  //  console.log(to_table);
     const yamlData = {
       create_index: 1,
       table: to_table,
@@ -781,11 +772,11 @@ export default class Migrator {
   }
 
   newReference(ref) {
-    console.log(ref);
+  //  console.log(ref);
 
     // AddReferenceXToY
     ref = ref.replace("AddReference", "");
-    console.log(ref);
+   // console.log(ref);
     const data = ref.split("To");
     let from_table = data[0];
     let to_table = data[1];
@@ -793,9 +784,9 @@ export default class Migrator {
 
     let natural = require("natural");
     let nounInflector = new natural.NounInflector();
-    console.log(nounInflector.pluralize("radius"));
+ //   console.log(nounInflector.pluralize("radius"));
 
-    console.log(from_table + " " + to_table + ref_col);
+ //   console.log(from_table + " " + to_table + ref_col);
     // get primary key
 
     this.connection
@@ -816,7 +807,7 @@ export default class Migrator {
       limit: 1,
       order: [["created_at", "DESC"]]
     }).then(foo => {
-      console.log(foo[0].fileName);
+      //console.log(foo[0].fileName);
       const rollingBackName = foo[0].fileName;
       const rollingBackId = foo[0].id;
 
@@ -829,8 +820,8 @@ export default class Migrator {
         let prfx = "";
         this.getPrefixOrigin(data.table_name).then(dt => {
           prfx = dt;
-          console.log("prfx " + prfx);
-          console.log();
+        //  console.log("prfx " + prfx);
+        //  console.log();
           const dropSQL =
             "ALTER TABLE " +
             data.table_name +
@@ -840,14 +831,14 @@ export default class Migrator {
           this.rollBackNotifyDB(dropSQL, rollingBackId);
         });
       } else if (data.change_column_type === 1) {
-        console.log("Reading Rollback Migration");
+       // console.log("Reading Rollback Migration");
 
         let fileContents = fs.readFileSync(
           `./rollbacks/rlbk_${rollingBackName}.yaml`,
           "utf8"
         );
         let data = yaml.safeLoad(fileContents);
-        console.log(data);
+       // console.log(data);
 
         const modifySQL =
           "ALTER TABLE " +
@@ -856,7 +847,7 @@ export default class Migrator {
           data.title +
           " " +
           data.was.toUpperCase();
-        console.log(modifySQL);
+     //   console.log(modifySQL);
         this.connection.query(modifySQL).then(success => {
           self.deleteMigrationFromDB(rollingBackId);
         });
@@ -1002,8 +993,8 @@ export default class Migrator {
 
   dropTables(data) {
     const migrName = this.getNewMigrationFileName("DropTables" + data[0]);
-    console.log("DATA");
-    console.log(data);
+   // console.log("DATA");
+    //console.log(data);
     let yamlData = {
       drop_tables: 1,
       name: migrName,
@@ -1016,8 +1007,8 @@ export default class Migrator {
 
   removeColumn(data) {
     const migrName = this.getNewMigrationFileName(data[0]);
-    console.log("DATA");
-    console.log(data);
+   // console.log("DATA");
+   // console.log(data);
     let to_table = data[0].replace("RemoveColumnsFrom", "");
     let cols = [];
     const colstart = 1;
@@ -1036,7 +1027,7 @@ export default class Migrator {
   }
 
   changeColumnType(data) {
-    console.log(data);
+   // console.log(data);
     const migrName = this.getNewMigrationFileName(data[0]);
     let to_table = data[0].replace("ChangeTypeIn_", "");
     let yamlData = {
@@ -1055,8 +1046,8 @@ export default class Migrator {
 
   renameColumn(data) {
     const migrName = this.getNewMigrationFileName(data[0]);
-    console.log("DATA");
-    console.log(data);
+    //console.log("DATA");
+   // console.log(data);
     let to_table = data[0].replace("RenameColumnIn", "");
     let cols = [];
     const colstart = 1;
@@ -1078,8 +1069,8 @@ export default class Migrator {
 
   newColumns(data) {
     const migrName = this.getNewMigrationFileName(data[0]);
-    console.log("DATA");
-    console.log(data);
+   // console.log("DATA");
+   // console.log(data);
     let to_table = data[0].replace("AddColumnsTo_", "");
     let cols = [];
     const colstart = 1;
@@ -1092,7 +1083,7 @@ export default class Migrator {
 
     for (let col = colstart; col < data.length; col++) {
       let col_data = data[col].split(":");
-      console.log(data[col]);
+    //  console.log(data[col]);
       let col_type = col_data[1].toUpperCase();
       if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
         // oops type not  supported
@@ -1139,11 +1130,11 @@ export default class Migrator {
           const diffs = _.difference(cleanFiles, res[1]);
           let insertPromiseArr = [];
           diffs.forEach(diff => {
-            console.log("Inserting diff " + diff);
+           // console.log("Inserting diff " + diff);
             insertPromiseArr.push(self.insertMigration(diff));
           });
     
-          console.log("promise all exec");
+        //  console.log("promise all exec");
           Promise.all(insertPromiseArr).then(resIns => {
             console.log("Trying to executing migrations");
             self.executeMigrations();
