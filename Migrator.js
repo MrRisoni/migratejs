@@ -499,13 +499,13 @@ export default class Migrator {
           );
           let data = yaml.safeLoad(fileContents);
           if (data.create_table ==1) {
-            migrationFunction = migration_helpers.actionA();
+            migrationFunction = migration_helpers.actionA(migrRow.fileName);
           }else if (data.add_columns) {
-            migrationFunction = migration_helpers.actionB();
+            migrationFunction = migration_helpers.actionA(migrRow.fileName);
           }else if (data.rename_columns === 1) {
-            migrationFunction = migration_helpers.actionC();
+            migrationFunction = migration_helpers.actionB(migrRow.fileName);
           }else if (data.remove_columns === 1) {
-            migrationFunction = migration_helpers.actionD();
+            migrationFunction = migration_helpers.actionB(migrRow.fileName);
           }
 
           return migrationFunction;
@@ -515,8 +515,9 @@ export default class Migrator {
        //Promise.all(promiseArr).then(resPromiseAllen => {
       //   console.log(resPromiseAllen);
       // })
-      BlueBirdPromise.mapSeries(promiseArr, (rpm, indx_rpm) => {
-          console.log(indx_rpm);
+      BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
+          console.log(indx_prms);
+          return prmsFnc;
       }).then(resPromiseAllen => {
         console.log(resPromiseAllen);
       })

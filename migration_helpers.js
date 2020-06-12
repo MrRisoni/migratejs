@@ -1,35 +1,19 @@
 
-   export function actionA()
+   export function actionA(msg)
    {
     return new Promise(resolve => {
-        resolve('A');
-    });
-   }
-
-
-   export function actionB()
-   {
-    return new Promise(resolve => {
-        resolve('B');
+        resolve( msg);
     });
    }
 
 
 
-   export function actionC()
-   {
-    return new Promise(resolve => {
-        resolve('C');
-    });
-   }
 
-
-
-   export function actionD()
+   export function actionB(msg)
    {
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve('D');
+        resolve( msg);
       }, 1000);
     });
    }
