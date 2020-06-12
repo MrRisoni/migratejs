@@ -351,54 +351,40 @@ module.exports =
 
 
         runTask(spec) {
-           console.log('TYPE IS ' + spec['type']);
+            console.log('TYPE IS ' + spec['type']);
             switch (spec['type']) {
                 case 'create_table':
-                  
                     return migration_helpers.createTableMigration(spec);
-                   
                 case 'add_columns':
                     return migration_helpers.addColumnMigration(spec);
-                    
-
                 case 'rename_columns':
-            
                     return migration_helpers.renameColumnMigration(spec);
-                          
                 case 'remove_columns':
                     return migration_helpers.removeColumnMigration(spec);
-                              
-
             }
-
-           
         }
 
-        async fooooo(promiseArr)
-        {
+        async migrationReduce(promiseArr) {
             const self = this;
 
             const starterPromise = Promise.resolve(null);
             const log = result => console.log(result);
-            
+
             await promiseArr.reduce(
                 (p, spec) => p.then(() => self.runTask(spec).then(log)),
                 starterPromise
             );
-            
-
         }
 
         executeMigrations() {
             const self = this;
-            let migrationFunction = null;
             let migrFuncArgs = {};
             console.log('executeMigrations');
 
 
             this.get_pending_res_migrs().then(res => {
                 let promiseArr = res.map(migrRow => {
-                     //console.log(migrRow.fileName);
+                    //console.log(migrRow.fileName);
                     let fileContents = fs.readFileSync(
                         `./${this.migrations_path}/${migrRow.fileName}.yaml`,
                         "utf8"
@@ -412,39 +398,22 @@ module.exports =
                     };
 
                     if (data.create_table == 1) {
-                       // migrationFunction = migration_helpers.createTableMigration;
-                       migrFuncArgs['type'] = 'create_table';
-                       console.log(migrFuncArgs['type']);
+                        migrFuncArgs['type'] = 'create_table';
                     } else if (data.add_columns) {
                         migrFuncArgs['type'] = 'add_columns';
-                        console.log(migrFuncArgs['type']);
-                       // migrationFunction = migration_helpers.addColumnMigration;
                     } else if (data.rename_columns === 1) {
                         migrFuncArgs['type'] = 'rename_columns';
-                        console.log(migrFuncArgs['type']);
-                      //  migrationFunction = migration_helpers.renameColumnMigration;
                     } else if (data.remove_columns === 1) {
                         migrFuncArgs['type'] = 'remove_columns';
-                        console.log(migrFuncArgs['type']);
-                       // migrationFunction = migration_helpers.removeColumnMigration;
                     }
 
-                    return migrFuncArgs ; //migrationFunction;
-
+                    return migrFuncArgs; //migrationFunction;
                 });
-
-
-                console.log('Promise all begin');
-                console.log(promiseArr.length);
-                self.fooooo(promiseArr);
+                self.migrationReduce(promiseArr);
 
             });
 
-
-
-
         }
-
 
         get_pending_res_migrs() {
             const self = this;
@@ -457,222 +426,6 @@ module.exports =
             });
         }
 
-
-        executeMigrationsOLD() {
-            const self = this;
-            let migrationsPromiseArray = [];
-
-            self.MigrationModel.findAll({
-                where: {
-                    processed: 0
-                },
-                order: [["id", "ASC"]]
-            }).then(results => {
-                if (results.length > 0) {
-                    results.forEach(res => {
-
-                        console.log("EXECUTING " + res.fileName);
-
-                        let fileContents = fs.readFileSync(
-                            `./${this.migrations_path}/${res.fileName}.yaml`,
-                            "utf8"
-                        );
-                        let migrationFunction = null;
-                        let data = yaml.safeLoad(fileContents);
-                        let prefix = data.prefix + "_";
-                        //  console.log(data);
-                        const to_table = data.table_name;
-
-                        if (data.drop_tables) {
-                            migrationFunction = this.dropTableMigration(data);
-                        } else if (data.drop_index === 1) {
-                            // store for rollback
-                            const q =
-                                " SHOW INDEX FROM " +
-                                data.table_name +
-                                " WHERE Key_name = '" +
-                                data.index_name +
-                                "'";
-                            console.log(q);
-                            this.connection
-                                .query(q, {type: Sequelize.QueryTypes.SELECT})
-                                .then(resIdx => {
-                                    console.log(res);
-
-                                    const ymlOldType = {
-                                        drop_index: 1,
-                                        name: "rlbk_" + res.fileName,
-                                        table_name: data.table_name,
-                                        title: data.index_name,
-                                        column: resIdx[0].Column_name
-                                    };
-
-                                    this.writeRollBackMigrationFile({
-                                        filename: "rlbk_" + res.fileName,
-                                        contents: yaml.safeDump(ymlOldType)
-                                    }).then(writeRblk => {
-                                        this.connection
-                                            .query(
-                                                "DROP INDEX " + data.index_name + " ON " + data.table_name
-                                            )
-                                            .then(success => {
-                                                this.update(res.fileName);
-                                            });
-                                    });
-                                });
-                        } else if (data.change_column_type === 1) {
-                            migrationFunction = this.changeColumnMigration(data);
-                        } else if (data.remove_columns === 1) {
-                            //  migrationFunction = this.removeColumnMigration(data);
-                            migrationFunction = self.actionD();
-
-                        } else if (data.rename_columns === 1) {
-                            // migrationFunction = this.renameColumnMigration(data);
-                            migrationFunction = self.actionC();
-
-                        } else if (data.add_columns) {
-                            //migrationFunction = this.addColumnMigration(data, res);
-                            migrationFunction = self.actionB();
-                        } else if (data.create_index === 1) {
-                            migrationFunction = this.addIndexMigration(data);
-                        } else if (data.create_fkey === 1) {
-                            const addColSQL =
-                                "ALTER TABLE " +
-                                data.table +
-                                " ADD COLUMN " +
-                                data.fkey_column_name +
-                                " " +
-                                data.fkey_type;
-                            this.connection
-                                .query(addColSQL)
-                                .then(addColRes => {
-                                    const addConstraintSQL =
-                                        "  ALTER TABLE " +
-                                        data.table +
-                                        " ADD FOREIGN KEY ( " +
-                                        data.fkey_column_name +
-                                        ") " +
-                                        " REFERENCES " +
-                                        data.referenceTable +
-                                        "(" +
-                                        data.referenceCol +
-                                        ") " +
-                                        "  ON UPDATE " +
-                                        data.onUpdate +
-                                        " ON DELETE  " +
-                                        data.onDelete;
-                                    //  console.log(addConstraintSQL);
-                                    this.connection
-                                        .query(addConstraintSQL)
-                                        .then(addConstrRes => {
-                                            this.update(res.fileName);
-                                        })
-                                        .catch(err2 => {
-                                            console.log(err2);
-                                        });
-                                })
-                                .catch(err1 => {
-                                    console.log(err1);
-                                });
-                        } else if (data.create_table === 1) {
-                            //migrationFunction = self.createTableMigration(data);
-                            migrationFunction = self.actionA();
-                        }
-
-                        /*   migrationFunction.then(migrRes => {
-                         *    console.log("FINISHED " + res.fileName);
-
-
-                              })
-                */
-
-                        /*
-                                  //  migrationFunction.then(migrRes => {
-                                  //     console.log("FINISHED " + res.fileName);
-
-                                  //      this.update(res.fileName);
-                                  //     })
-
-                                  //  migrationsPromiseArray.push(migrationFunction);
-                                  */
-                    });
-                } else {
-                    console.log("Nothing to migrate");
-                }
-            });
-        }
-
-        makeColumnSQL(col, prefix, add = 0, quote = "`") {
-            let sql = quote + prefix + col.title + quote;
-            console.log("making comment for col ");
-            console.log(col);
-            switch (col.type) {
-                case "DATE":
-                    sql += "  " + col.type;
-                    break;
-                case "STRING":
-                    if (typeof col.len === "undefined") {
-                        sql += " VARCHAR(255) "; //" COLLATE " + col.options[0]['collation']
-                    } else {
-                        sql += " VARCHAR(" + col.len + ") ";
-                    }
-                    break;
-                case "INT":
-                case "TINYINT":
-                    sql += "  " + col.type;
-                    if (typeof col.unsigned !== "undefined") {
-                        sql += " UNSIGNED ";
-                    }
-                    if (typeof col.defaultVal !== "undefined") {
-                        sql += " DEFAULT " + col.defaultVal;
-                    }
-                    break;
-                case "TEXT":
-                    sql += " TEXT "; //" COLLATE " + col.options[0]['collation']
-                    break;
-                case "DECIMAL":
-                    sql +=
-                        " DECIMAL(" +
-                        col.options[0]["precision"] +
-                        "," +
-                        col.options[0]["scale"] +
-                        ")";
-                    if (col.options[0]["unsigned"]) {
-                        sql += " UNSIGNED ";
-                    }
-                    if (col.options[0]["not_null"]) {
-                        sql += " NOT NULL ";
-                    }
-                    sql += " DEFAULT '0' ";
-
-                    break;
-                default:
-                    sql = "";
-            }
-
-            if (typeof col.defaultVal !== "undefined") {
-                sql += " DEFAULT " + col.defaultVal;
-            }
-
-            if (typeof col.not_null !== "undefined") {
-                if (col.not_null) {
-                    sql += " NOT NULL ";
-                }
-            }
-
-            if (add === 1) {
-                sql = " ADD COLUMN " + sql;
-            }
-            if (typeof col.after !== "undefined") {
-                sql += " AFTER " + col.after;
-            }
-
-            if (typeof col.comment !== "undefined" && col.comment.length > 0) {
-                sql += " COMMENT '" + col.comment + "'";
-            }
-
-            return sql;
-        }
 
         getNewMigrationFileName(ref) {
             const stamp = moment().format("YYYYMMDD_hhmmss");
