@@ -133,3 +133,86 @@ import * as dialects from "./sql_dialects";
 
     return sql;
   }
+
+
+
+  export function  addColumnMigration(migrFuncArgs) {
+
+    const data = migrFuncArgs.data;
+    const conn = migrFuncArgs.conn;
+    const migrName = migrFuncArgs.migrName;
+    
+
+
+    // this is buggy
+    const selbst = this;
+
+    const to_table = data.table_name;
+    // get prefix
+    console.log("Add Cols");
+    conn.query("SHOW COLUMNS FROM " + to_table)
+      .then(cols => {
+        const first_col = cols[0][0].Field;
+        let prfx = first_col.split("_")[0];
+        if (prfx.length > 0) {
+          prfx += "_";
+        }
+        console.log(prfx);
+        let columnsSQL = [];
+        data.columns.forEach((item, i) => {
+          columnsSQL.push(makeColumnSQL(item, prfx, 1));
+        });
+        console.log(columnsSQL);
+ 
+        let alterSQL =
+          " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
+        console.log(alterSQL);
+        return conn.query(alterSQL);
+      });
+  
+  }
+
+
+
+
+
+  function renameColumnMigration(data) {
+    console.log(" rename cols ");
+    const self = this;
+
+    return new Promise((resolve, reject) => {
+      self.connection
+        .query("SHOW COLUMNS FROM " + data.table_name)
+        .then(cols => {
+          console.log(cols[0]);
+          let colObj = cols[0].filter(clitm => {
+            return clitm.Field === data.columns[0].from;
+          });
+          console.log("Col obj");
+          console.log(colObj);
+          if (colObj.length == 0) {
+            console.log("No such column " + data.columns[0].from);
+          }
+          const changeSQL =
+            "ALTER TABLE " +
+            data.table_name +
+            " CHANGE " +
+            data.columns[0].from +
+            " " +
+            data.columns[0].to +
+            " " +
+            colObj[0].Type;
+
+          console.log(changeSQL);
+          self.connection.query(changeSQL).then(res => {
+            resolve();
+          });
+        })
+        .catch(err2 => {
+          console.log("err2");
+          console.log(err2);
+          reject();
+        });
+    });
+  }
+

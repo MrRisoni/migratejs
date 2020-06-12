@@ -309,49 +309,6 @@ export default class Migrator {
 
 
 
-  async addColumnMigration(data, res) {
-    // this is buggy
-    const selbst = this;
-
-      const to_table = data.table_name;
-      // get prefix
-      console.log("Add Cols");
-      const colsList = await self.getColumnsListFromTable(to_table);
-      console.log("Cols list");
-      console.log(colsList);
-
-      
-  /*    selbst.connection.query("SHOW COLUMNS FROM " + to_table).then(cols => {
-        const first_col = cols[0][0].Field;
-        let prfx = first_col.split("_")[0];
-        if (prfx.length > 0) {
-          prfx += "_";
-        }
-        console.log("prefix ist");
-        console.log(prfx);
-        let columnsSQL = [];
-        data.columns.forEach((item, i) => {
-          columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
-        });
-        console.log(columnsSQL);
-
-        let alterSQL = " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-        console.log("addColumnMigration Function");
-
-        console.log(alterSQL);
-        selbst.connection
-          .query(alterSQL)
-          .then(alterRes => {
-            resolve();
-          })
-          .catch(err => {
-            console.log("addColumnMigration ERROR");
-            console.log(err);
-          });
-      }); */
-  
-  }
-
   changeColumnMigration(data, res) {
     const selbst = this;
     selbst.getPrefixOrigin(data.table_name).then(dt => {
@@ -405,53 +362,12 @@ export default class Migrator {
     return this.connection.query(changeSQL);
   }
 
-  renameColumnMigration(data) {
-    console.log(" rename cols ");
-    const self = this;
-
-    return new Promise((resolve, reject) => {
-      self.connection
-        .query("SHOW COLUMNS FROM " + data.table_name)
-        .then(cols => {
-          console.log(cols[0]);
-          let colObj = cols[0].filter(clitm => {
-            return clitm.Field === data.columns[0].from;
-          });
-          console.log("Col obj");
-          console.log(colObj);
-          if (colObj.length == 0) {
-            console.log("No such column " + data.columns[0].from);
-          }
-          const changeSQL =
-            "ALTER TABLE " +
-            data.table_name +
-            " CHANGE " +
-            data.columns[0].from +
-            " " +
-            data.columns[0].to +
-            " " +
-            colObj[0].Type;
-
-          console.log(changeSQL);
-          self.connection.query(changeSQL).then(res => {
-            resolve();
-          });
-        })
-        .catch(err2 => {
-          console.log("err2");
-          console.log(err2);
-          reject();
-        });
-    });
-  }
-
-
 
   executeMigrations()
   {
     const self = this;
     let migrationFunction = null;
-
+    let  migrFuncArgs = {};
     console.log('executeMigrations');
     this.get_pending_res_migrs().then(res => {
        let promiseArr = res.map(migrRow => {
@@ -461,33 +377,32 @@ export default class Migrator {
             "utf8"
           );
           let data = yaml.safeLoad(fileContents);
+          migrFuncArgs = {data:data, dialect: self.dialect, conn: self.connection, migrName: migrRow.fileName};
+
           if (data.create_table ==1) {
             migrationFunction = migration_helpers.createTableMigration(data, self.dialect,self.connection, migrRow.fileName);
           }else if (data.add_columns) {
-            migrationFunction = migration_helpers.actionA(migrRow.fileName);
+            migrationFunction = migration_helpers.addColumnMigration(migrFuncArgs);
           }else if (data.rename_columns === 1) {
-            migrationFunction = migration_helpers.actionB(migrRow.fileName);
+            migrationFunction = migration_helpers.renameColumnMigration(migrFuncArgs);
           }else if (data.remove_columns === 1) {
-            migrationFunction = migration_helpers.actionB(migrRow.fileName);
+            migrationFunction = migration_helpers.actionB(migrFuncArgs);
           }
 
           return migrationFunction;
        });
 
        console.log('Promise all begin');
-       //Promise.all(promiseArr).then(resPromiseAllen => {
-      //   console.log(resPromiseAllen);
-      // })
       BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
           console.log(indx_prms);
           return prmsFnc;
       }).then(resPromiseAllen => {
         console.log('AllMigrations Finished!')
       //  console.log(resPromiseAllen);
-      })
+      });
 
 
-    })
+    });
   }
 
 
