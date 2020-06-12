@@ -45,7 +45,7 @@ function createTableMigration(migrFuncArgs) {
         createSQL += " COMMENT '" + data.comment + "'";
     }
     console.log(createSQL);
-    return connection.query(createSQL);
+    return conn.query(createSQL);
 }
 
 
@@ -129,9 +129,12 @@ function addColumnMigration(migrFuncArgs) {
     const migrName = migrFuncArgs.migrName;
     console.log('Running  ' + migrName);
 
+
+
     // this is buggy  !!!!!
     const selbst = this;
 
+    return new Promise((resolve,reject) => {
     const to_table = data.table_name;
     // get prefix
     // console.log("Add Cols");
@@ -152,9 +155,11 @@ function addColumnMigration(migrFuncArgs) {
             let alterSQL =
                 " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
             console.log(alterSQL);
-            return conn.query(alterSQL);
+            conn.query(alterSQL).then(ff => {
+                resolve();
+            })
         });
-
+    });
 }
 
 
@@ -193,7 +198,7 @@ function renameColumnMigration(migrFuncArgs) {
                     " " +
                     colObj[0].Type;
 
-                //  console.log(changeSQL);
+                  console.log(changeSQL);
                 conn.query(changeSQL).then(res => {
                     resolve();
                 });

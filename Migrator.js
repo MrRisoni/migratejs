@@ -351,24 +351,24 @@ module.exports =
 
 
         runTask(spec) {
-            let migrationFunction = null;
-           console.log(spec['type']);
+           console.log('TYPE IS ' + spec['type']);
             switch (spec['type']) {
                 case 'create_table':
                   
                     return migration_helpers.createTableMigration(spec);
-                    break;
+                   
                 case 'add_columns':
                     return migration_helpers.addColumnMigration(spec);
-                        break;
+                    
 
                 case 'rename_columns':
             
                     return migration_helpers.renameColumnMigration(spec);
-                            break;
+                          
                 case 'remove_columns':
                     return migration_helpers.removeColumnMigration(spec);
-                                break;
+                              
+
             }
 
            
@@ -414,14 +414,18 @@ module.exports =
                     if (data.create_table == 1) {
                        // migrationFunction = migration_helpers.createTableMigration;
                        migrFuncArgs['type'] = 'create_table';
+                       console.log(migrFuncArgs['type']);
                     } else if (data.add_columns) {
                         migrFuncArgs['type'] = 'add_columns';
+                        console.log(migrFuncArgs['type']);
                        // migrationFunction = migration_helpers.addColumnMigration;
                     } else if (data.rename_columns === 1) {
                         migrFuncArgs['type'] = 'rename_columns';
+                        console.log(migrFuncArgs['type']);
                       //  migrationFunction = migration_helpers.renameColumnMigration;
                     } else if (data.remove_columns === 1) {
                         migrFuncArgs['type'] = 'remove_columns';
+                        console.log(migrFuncArgs['type']);
                        // migrationFunction = migration_helpers.removeColumnMigration;
                     }
 
@@ -433,15 +437,6 @@ module.exports =
                 console.log('Promise all begin');
                 console.log(promiseArr.length);
                 self.fooooo(promiseArr);
-
-                //BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
-                //    console.log(indx_prms);
-                //    return prmsFnc;
-                // }).then(resPromiseAllen => {
-                //   console.log('AllMigrations Finished!')
-                //  console.log(resPromiseAllen);
-                ///  });
-
 
             });
 
