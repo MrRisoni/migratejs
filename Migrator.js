@@ -310,30 +310,36 @@ export default class Migrator {
 
    const selbst = this;
 
-   const to_table = data.table_name;
-   // get prefix
-   console.log("Add Cols");
-   this.connection
-     .query("SHOW COLUMNS FROM " + to_table)
-     .then(cols => {
-       const first_col = cols[0][0].Field;
-       let prfx = first_col.split("_")[0];
-       if (prfx.length > 0) {
-         prfx += "_";
-       }
-       console.log(prfx);
-       let columnsSQL = [];
-       data.columns.forEach((item, i) => {
-         columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
-       });
-       console.log(columnsSQL);
+    return new Promise((resolve,reject) => {
 
-       let alterSQL =
-         " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-       console.log(alterSQL);
-       return selbst.connection.query(alterSQL);
-     });
 
+
+    const to_table = data.table_name;
+    // get prefix
+    console.log("Add Cols");
+    selbst.connection
+      .query("SHOW COLUMNS FROM " + to_table)
+      .then(cols => {
+        const first_col = cols[0][0].Field;
+        let prfx = first_col.split("_")[0];
+        if (prfx.length > 0) {
+          prfx += "_";
+        }
+        console.log(prfx);
+        let columnsSQL = [];
+        data.columns.forEach((item, i) => {
+          columnsSQL.push(this.makeColumnSQL(item, prfx, 1));
+        });
+        console.log(columnsSQL);
+
+        let alterSQL =
+          " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
+        console.log(alterSQL);
+        selbst.connection.query(alterSQL).then(alterRes => {
+           resolve();
+        });
+      });
+  });
  }
 
 
@@ -542,11 +548,10 @@ export default class Migrator {
           } else if (data.rename_columns === 1) {
               migrationFunction = this.renameColumnMigration(data)
           } else if (data.add_columns) {
-            this.addColumnMigration(data,res);
+            migrationFunction = this.addColumnMigration(data,res);
           } else if (data.create_index === 1) {
             migrationFunction = this.addIndexMigration(data)
           } else if (data.create_fkey === 1) {
-            // create new column
             const addColSQL =
               "ALTER TABLE " +
               data.table +
@@ -1149,7 +1154,7 @@ export default class Migrator {
       });
   }
 
-  refreshDB() {
+  migrateDB() {
     const self = this;
     /* say many devs are working on the same project
          one dev will pull all the migration files from db
