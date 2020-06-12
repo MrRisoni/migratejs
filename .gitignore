@@ -23,6 +23,3 @@ yarn-error.log*
 *.env
 .env.yml
 *.swp
-*.sh
-bash_*
-bash_create_table.sh

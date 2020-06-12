@@ -1,3 +1,6 @@
+
+addColumnMigration buggy
+
 table charset
 text
 medium text

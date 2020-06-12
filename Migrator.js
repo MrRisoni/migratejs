@@ -270,61 +270,48 @@ export default class Migrator {
     });
   }
 
-
-
-  addIndexMigration(data,res) {
-
+  addIndexMigration(data, res) {
     const selbst = this;
 
-  console.log("creating index");
-  let cols = data.columns.map(col => {
-    return col.title;
-  });
-  let to_table = data.table;
+    console.log("creating index");
+    let cols = data.columns.map(col => {
+      return col.title;
+    });
+    let to_table = data.table;
 
-  let indexSQL = "CREATE ";
-  if (data.unique) {
-    indexSQL += " UNIQUE ";
+    let indexSQL = "CREATE ";
+    if (data.unique) {
+      indexSQL += " UNIQUE ";
+    }
+    indexSQL += " INDEX " + data.name + " ON " + to_table;
+    indexSQL += " ( " + cols.join(",") + ")";
+    console.log(indexSQL);
+    return selbst.connection.query(indexSQL);
   }
-  indexSQL += " INDEX " + data.name + " ON " + to_table;
-  indexSQL += " ( " + cols.join(",") + ")";
-  console.log(indexSQL);
-  return  selbst.connection.query(indexSQL)
 
+  dropTableMigration(data, res) {
+    console.log("Dropping table");
+    const dropSQL = "DROP  TABLE " + data.tables[0];
+    console.log(dropSQL);
 
-}
+    return selbst.connection.query(dropSQL);
+  }
 
+  addColumnMigration(data, res) {
+    // this is buggy
+    const selbst = this;
 
- dropTableMigration(data, res)
- {
-
-     console.log("Dropping table");
-     const dropSQL = "DROP  TABLE " + data.tables[0];
-     console.log(dropSQL);
-
-     return selbst.connection.query(dropSQL);
-
- }
-
- addColumnMigration(data,res){
-
-   const selbst = this;
-
-    return new Promise((resolve,reject) => {
-
-
-
-    const to_table = data.table_name;
-    // get prefix
-    console.log("Add Cols");
-    selbst.connection
-      .query("SHOW COLUMNS FROM " + to_table)
-      .then(cols => {
+    return new Promise((resolve, reject) => {
+      const to_table = data.table_name;
+      // get prefix
+      console.log("Add Cols");
+      selbst.connection.query("SHOW COLUMNS FROM " + to_table).then(cols => {
         const first_col = cols[0][0].Field;
         let prfx = first_col.split("_")[0];
         if (prfx.length > 0) {
           prfx += "_";
         }
+        console.log("prefix ist");
         console.log(prfx);
         let columnsSQL = [];
         data.columns.forEach((item, i) => {
@@ -332,16 +319,22 @@ export default class Migrator {
         });
         console.log(columnsSQL);
 
-        let alterSQL =
-          " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
-        console.log(alterSQL);
-        selbst.connection.query(alterSQL).then(alterRes => {
-           resolve();
-        });
-      });
-  });
- }
+        let alterSQL = " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
+        console.log("addColumnMigration Function");
 
+        console.log(alterSQL);
+        selbst.connection
+          .query(alterSQL)
+          .then(alterRes => {
+            resolve();
+          })
+          .catch(err => {
+            console.log("addColumnMigration ERROR");
+            console.log(err);
+          });
+      });
+    });
+  }
 
   changeColumnMigration(data, res) {
     const selbst = this;
@@ -350,146 +343,138 @@ export default class Migrator {
       console.log("prfx " + prfx);
       // get original type
       // write rollback backup migration file
-      selbst.getColType(
-        data.table_name,
-        prfx + data.columns[0].title
-      ).then(oldTypeRes => {
-        console.log("old type");
-        console.log(oldTypeRes[0]);
+      selbst
+        .getColType(data.table_name, prfx + data.columns[0].title)
+        .then(oldTypeRes => {
+          console.log("old type");
+          console.log(oldTypeRes[0]);
 
-        const ymlOldType = {
-          change_column_type: 1,
-          name: "rlbk_" + res.fileName,
-          table_name: data.table_name,
-          title: prfx + data.columns[0].title,
-          was: oldTypeRes[0].Type
-        };
+          const ymlOldType = {
+            change_column_type: 1,
+            name: "rlbk_" + res.fileName,
+            table_name: data.table_name,
+            title: prfx + data.columns[0].title,
+            was: oldTypeRes[0].Type
+          };
 
-        selbst.writeRollBackMigrationFile({
-          filename: "rlbk_" + res.fileName,
-          contents: yaml.safeDump(ymlOldType)
-        }).then(writeRblk => {
-          const modifySQL =
-            "ALTER TABLE " +
-            data.table_name +
-            " MODIFY COLUMN  " +
-            prfx +
-            data.columns[0].title +
-            " " +
-            data.columns[0].to.toUpperCase();
-          console.log(modifySQL);
-            return selbst.this.connection.query(modifySQL)
+          selbst
+            .writeRollBackMigrationFile({
+              filename: "rlbk_" + res.fileName,
+              contents: yaml.safeDump(ymlOldType)
+            })
+            .then(writeRblk => {
+              const modifySQL =
+                "ALTER TABLE " +
+                data.table_name +
+                " MODIFY COLUMN  " +
+                prfx +
+                data.columns[0].title +
+                " " +
+                data.columns[0].to.toUpperCase();
+              console.log(modifySQL);
+              return selbst.this.connection.query(modifySQL);
+            });
         });
-      });
-
-    })
+    });
   }
 
   createTableMigration(data, res) {
     const selbst = this;
-      let prefix = data.prefix + "_";
-      let pKey = prefix + "id";
-      let pKeysList = [pKey];
-      let quote = dialects.getQuotes(this.dialect);
+    let prefix = data.prefix + "_";
+    let pKey = prefix + "id";
+    let pKeysList = [pKey];
+    let quote = dialects.getQuotes(this.dialect);
 
-      let columnsSQL = [dialects.getPrimaryKey(this.dialect, pKey, data)];
+    let columnsSQL = [dialects.getPrimaryKey(this.dialect, pKey, data)];
 
-      data.columns.forEach((item, i) => {
-        if (item.primary) {
-          pKeysList.push(prefix + item.title);
-        }
-        columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
-      });
-
-      if (data.created_at) {
-        columnsSQL.push(dialects.createdAt(this.dialect, prefix));
+    data.columns.forEach((item, i) => {
+      if (item.primary) {
+        pKeysList.push(prefix + item.title);
       }
-      if (data.updated_at) {
-        columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
-      }
+      columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
+    });
 
-      columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
+    if (data.created_at) {
+      columnsSQL.push(dialects.createdAt(this.dialect, prefix));
+    }
+    if (data.updated_at) {
+      columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
+    }
 
-      let createSQL =
-        " CREATE TABLE " +
-        data.table_name +
-        " ( " +
-        columnsSQL.join(",") +
-        ") ";
+    columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
 
-      if (typeof data.engine !== "undefined") {
-        createSQL += " ENGINE =  " + data.engine;
-      }
-      if (typeof data.comment !== "undefined" && data.comment.length > 0) {
-        createSQL += " COMMENT '" + data.comment + "'";
-      }
+    let createSQL =
+      " CREATE TABLE " + data.table_name + " ( " + columnsSQL.join(",") + ") ";
 
-      return selbst.connection.query(createSQL);
+    if (typeof data.engine !== "undefined") {
+      createSQL += " ENGINE =  " + data.engine;
+    }
+    if (typeof data.comment !== "undefined" && data.comment.length > 0) {
+      createSQL += " COMMENT '" + data.comment + "'";
+    }
 
+    return selbst.connection.query(createSQL);
   }
 
   removeColumnMigration(data) {
-    console.log(" rename cols ");
+    console.log(" removing cols ");
 
     const changeSQL =
       "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
 
     console.log(changeSQL);
-  //  this.connection.query(changeSQL).then(success => {
-    //  this.update(res.fileName);
-//    });
-    return   this.connection.query(changeSQL);
+    return this.connection.query(changeSQL);
   }
 
-  renameColumnMigration(data)
-  {
+  renameColumnMigration(data) {
     console.log(" rename cols ");
     const self = this;
 
-    return new Promise((resolve,reject) => {
-    this.connection
-      .query("SHOW COLUMNS FROM " + data.table_name)
-      .then(cols => {
-        console.log(cols[0]);
-        let colObj = cols[0].filter(clitm => {
-          return clitm.Field === data.columns[0].from;
-        });
-        console.log("Col obj");
-        console.log(colObj);
-        if (colObj.length ==0) {
-          console.log('No such column');
-        }
-        const changeSQL =
-          "ALTER TABLE " +
-          data.table_name +
-          " CHANGE " +
-          data.columns[0].from +
-          " " +
-          data.columns[0].to +
-          " " +
-          colObj[0].Type;
+    return new Promise((resolve, reject) => {
+      self.connection
+        .query("SHOW COLUMNS FROM " + data.table_name)
+        .then(cols => {
+          console.log(cols[0]);
+          let colObj = cols[0].filter(clitm => {
+            return clitm.Field === data.columns[0].from;
+          });
+          console.log("Col obj");
+          console.log(colObj);
+          if (colObj.length == 0) {
+            console.log("No such column " + data.columns[0].from);
+          }
+          const changeSQL =
+            "ALTER TABLE " +
+            data.table_name +
+            " CHANGE " +
+            data.columns[0].from +
+            " " +
+            data.columns[0].to +
+            " " +
+            colObj[0].Type;
 
-        console.log(changeSQL);
-        self.connection.query(changeSQL).then(res => {
-          resolve();
+          console.log(changeSQL);
+          self.connection.query(changeSQL).then(res => {
+            resolve();
+          });
+        })
+        .catch(err2 => {
+          console.log("err2");
+          console.log(err2);
+          reject();
         });
-      })
-      .catch(err2 => {
-        console.log('err2')
-        console.log(err2);
-        reject();
-      });
-});
+    });
   }
 
   executeMigrations() {
     const self = this;
+    let migrationsPromiseArray = [];
 
     self.MigrationModel.findAll({
       where: {
         processed: 0
       },
-      order: [["created_at", "ASC"]]
+      order: [["id", "ASC"]]
     }).then(results => {
       if (results.length > 0) {
         results.forEach(res => {
@@ -498,14 +483,14 @@ export default class Migrator {
             `./${this.migrations_path}/${res.fileName}.yaml`,
             "utf8"
           );
-          let migrationFunction =null;
+          let migrationFunction = null;
           let data = yaml.safeLoad(fileContents);
           let prefix = data.prefix + "_";
           //  console.log(data);
           const to_table = data.table_name;
 
           if (data.drop_tables) {
-            migrationFunction  = this.dropTableMigration(data);
+            migrationFunction = this.dropTableMigration(data);
           } else if (data.drop_index === 1) {
             // store for rollback
             const q =
@@ -542,15 +527,15 @@ export default class Migrator {
                 });
               });
           } else if (data.change_column_type === 1) {
-            migrationFunction = this.changeColumnMigration(data)
+            migrationFunction = this.changeColumnMigration(data);
           } else if (data.remove_columns === 1) {
-              migrationFunction = this.removeColumnMigration(data);
+            migrationFunction = this.removeColumnMigration(data);
           } else if (data.rename_columns === 1) {
-              migrationFunction = this.renameColumnMigration(data)
+            migrationFunction = this.renameColumnMigration(data);
           } else if (data.add_columns) {
-            migrationFunction = this.addColumnMigration(data,res);
+            migrationFunction = this.addColumnMigration(data, res);
           } else if (data.create_index === 1) {
-            migrationFunction = this.addIndexMigration(data)
+            migrationFunction = this.addIndexMigration(data);
           } else if (data.create_fkey === 1) {
             const addColSQL =
               "ALTER TABLE " +
@@ -577,7 +562,7 @@ export default class Migrator {
                   data.onUpdate +
                   " ON DELETE  " +
                   data.onDelete;
-                console.log(addConstraintSQL);
+                //  console.log(addConstraintSQL);
                 this.connection
                   .query(addConstraintSQL)
                   .then(addConstrRes => {
@@ -594,9 +579,13 @@ export default class Migrator {
             migrationFunction = self.createTableMigration(data);
           }
 
-          migrationFunction.then(migrRes => {
-             this.update(res.fileName);
-          })
+          //  migrationFunction.then(migrRes => {
+          //     console.log("FINISHED " + res.fileName);
+
+          //      this.update(res.fileName);
+          //     })
+
+          //  migrationsPromiseArray.push(migrationFunction);
         });
       } else {
         console.log("Nothing to migrate");
@@ -1162,26 +1151,35 @@ export default class Migrator {
          this functions inserts migrations to db
          and tries to execute them
          */
-    Promise.all([
-      this.getMigrationFiles(),
-      this.getAllMigrationNamesFromDB()
-    ]).then(res => {
-      const cleanFiles = res[0].map(fil => {
-        return fil.name;
-      });
-      // oh javascript weird execution order forces promises
-      const diffs = _.difference(cleanFiles, res[1]);
-      let insertPromiseArr = [];
-      diffs.forEach(diff => {
-        console.log("Inserting diff " + diff);
-        insertPromiseArr.push(self.insertMigration(diff));
+
+         // clear up db;
+         console.log(moment().format());
+    this.connection.query("DROP TABLE IF EXISTS posts,users,tickets;").then(dropRes => {
+      self.connection.query("TRUNCATE migrations ").then(dropRes => {
+        Promise.all([
+          this.getMigrationFiles(),
+          this.getAllMigrationNamesFromDB()
+        ]).then(res => {
+          const cleanFiles = res[0].map(fil => {
+            return fil.name;
+          });
+          // oh javascript weird execution order forces promises
+          const diffs = _.difference(cleanFiles, res[1]);
+          let insertPromiseArr = [];
+          diffs.forEach(diff => {
+            console.log("Inserting diff " + diff);
+            insertPromiseArr.push(self.insertMigration(diff));
+          });
+    
+          console.log("promise all exec");
+          Promise.all(insertPromiseArr).then(resIns => {
+            console.log("Trying to executing migrations");
+            self.executeMigrations();
+          });
+        });
       });
 
-      console.log("promise all exec");
-      Promise.all(insertPromiseArr).then(resIns => {
-        console.log("Trying to executing migrations");
-        self.executeMigrations();
-      });
     });
+   
   }
 }

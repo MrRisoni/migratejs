@@ -9,3 +9,5 @@ updated_at: true
 columns:
   - title: name
     type: STRING
+  - title: ban
+    type: INT
