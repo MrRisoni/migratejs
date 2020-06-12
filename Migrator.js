@@ -297,15 +297,62 @@ export default class Migrator {
     return selbst.connection.query(dropSQL);
   }
 
-  addColumnMigration(data, res) {
+
+   getColumnsListFromTable(tblName) {
+    return this.connection.query("SHOW COLUMNS FROM " + to_table);
+  }
+
+
+   actionA()
+   {
+    return new Promise(resolve => {
+        resolve('A');
+    });
+   }
+
+
+   actionB()
+   {
+    return new Promise(resolve => {
+        resolve('B');
+    });
+   }
+
+
+
+   actionC()
+   {
+    return new Promise(resolve => {
+        resolve('C');
+    });
+   }
+
+
+
+   actionD()
+   {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve('D');
+      }, 12000);
+    });
+   }
+
+
+
+  async addColumnMigration(data, res) {
     // this is buggy
     const selbst = this;
 
-    return new Promise((resolve, reject) => {
       const to_table = data.table_name;
       // get prefix
       console.log("Add Cols");
-      selbst.connection.query("SHOW COLUMNS FROM " + to_table).then(cols => {
+      const colsList = await self.getColumnsListFromTable(to_table);
+      console.log("Cols list");
+      console.log(colsList);
+
+      
+  /*    selbst.connection.query("SHOW COLUMNS FROM " + to_table).then(cols => {
         const first_col = cols[0][0].Field;
         let prfx = first_col.split("_")[0];
         if (prfx.length > 0) {
@@ -332,8 +379,8 @@ export default class Migrator {
             console.log("addColumnMigration ERROR");
             console.log(err);
           });
-      });
-    });
+      }); */
+  
   }
 
   changeColumnMigration(data, res) {
@@ -529,11 +576,16 @@ export default class Migrator {
           } else if (data.change_column_type === 1) {
             migrationFunction = this.changeColumnMigration(data);
           } else if (data.remove_columns === 1) {
-            migrationFunction = this.removeColumnMigration(data);
+          //  migrationFunction = this.removeColumnMigration(data);
+            migrationFunction = self.actionD();
+
           } else if (data.rename_columns === 1) {
-            migrationFunction = this.renameColumnMigration(data);
+           // migrationFunction = this.renameColumnMigration(data);
+           migrationFunction = self.actionC();
+
           } else if (data.add_columns) {
-            migrationFunction = this.addColumnMigration(data, res);
+            //migrationFunction = this.addColumnMigration(data, res);
+            migrationFunction = self.actionB();
           } else if (data.create_index === 1) {
             migrationFunction = this.addIndexMigration(data);
           } else if (data.create_fkey === 1) {
@@ -576,8 +628,17 @@ export default class Migrator {
                 console.log(err1);
               });
           } else if (data.create_table === 1) {
-            migrationFunction = self.createTableMigration(data);
+            //migrationFunction = self.createTableMigration(data);
+            migrationFunction = self.actionA();
           }
+
+           migrationFunction.then(migrRes => {
+             console.log("FINISHED " + res.fileName);
+
+        
+              })
+
+
 
           //  migrationFunction.then(migrRes => {
           //     console.log("FINISHED " + res.fileName);
