@@ -394,44 +394,7 @@ export default class Migrator {
     });
   }
 
-  createTableMigration(data, res) {
-    const selbst = this;
-    let prefix = data.prefix + "_";
-    let pKey = prefix + "id";
-    let pKeysList = [pKey];
-    let quote = dialects.getQuotes(this.dialect);
-
-    let columnsSQL = [dialects.getPrimaryKey(this.dialect, pKey, data)];
-
-    data.columns.forEach((item, i) => {
-      if (item.primary) {
-        pKeysList.push(prefix + item.title);
-      }
-      columnsSQL.push(this.makeColumnSQL(item, prefix, 0, quote));
-    });
-
-    if (data.created_at) {
-      columnsSQL.push(dialects.createdAt(this.dialect, prefix));
-    }
-    if (data.updated_at) {
-      columnsSQL.push(dialects.updatedAt(this.dialect, prefix));
-    }
-
-    columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
-
-    let createSQL =
-      " CREATE TABLE " + data.table_name + " ( " + columnsSQL.join(",") + ") ";
-
-    if (typeof data.engine !== "undefined") {
-      createSQL += " ENGINE =  " + data.engine;
-    }
-    if (typeof data.comment !== "undefined" && data.comment.length > 0) {
-      createSQL += " COMMENT '" + data.comment + "'";
-    }
-
-    return selbst.connection.query(createSQL);
-  }
-
+ 
   removeColumnMigration(data) {
     console.log(" removing cols ");
 
@@ -499,7 +462,7 @@ export default class Migrator {
           );
           let data = yaml.safeLoad(fileContents);
           if (data.create_table ==1) {
-            migrationFunction = migration_helpers.actionA(migrRow.fileName);
+            migrationFunction = migration_helpers.createTableMigration(data, self.dialect,self.connection, migrRow.fileName);
           }else if (data.add_columns) {
             migrationFunction = migration_helpers.actionA(migrRow.fileName);
           }else if (data.rename_columns === 1) {
@@ -519,7 +482,8 @@ export default class Migrator {
           console.log(indx_prms);
           return prmsFnc;
       }).then(resPromiseAllen => {
-        console.log(resPromiseAllen);
+        console.log('AllMigrations Finished!')
+      //  console.log(resPromiseAllen);
       })
 
 
