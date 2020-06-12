@@ -6,6 +6,7 @@ import Sequelize from "sequelize";
 import * as dialects from "./sql_dialects";
 import _ from "lodash";
 import * as migration_helpers from "./migration_helpers";
+import * as BlueBirdPromise from "bluebird";
 
 
 export default class Migrator {
@@ -514,9 +515,9 @@ export default class Migrator {
        //Promise.all(promiseArr).then(resPromiseAllen => {
       //   console.log(resPromiseAllen);
       // })
-      Promise.mapSeries(promiseArr, (rpm, indx_rpm) => {
-
-      }).then(promiseAllen => {
+      BlueBirdPromise.mapSeries(promiseArr, (rpm, indx_rpm) => {
+          console.log(indx_rpm);
+      }).then(resPromiseAllen => {
         console.log(resPromiseAllen);
       })
 

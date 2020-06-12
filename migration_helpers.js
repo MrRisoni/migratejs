@@ -30,6 +30,6 @@
     return new Promise(resolve => {
       setTimeout(() => {
         resolve('D');
-      }, 12000);
+      }, 1000);
     });
    }
