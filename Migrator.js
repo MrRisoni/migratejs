@@ -351,10 +351,45 @@ module.exports =
 
 
         runTask(spec) {
-            return "foo";
+            let migrationFunction = null;
+           console.log(spec['type']);
+            switch (spec['type']) {
+                case 'create_table':
+                  
+                    return migration_helpers.createTableMigration(spec);
+                    break;
+                case 'add_columns':
+                    return migration_helpers.addColumnMigration(spec);
+                        break;
+
+                case 'rename_columns':
+            
+                    return migration_helpers.renameColumnMigration(spec);
+                            break;
+                case 'remove_columns':
+                    return migration_helpers.removeColumnMigration(spec);
+                                break;
+            }
+
+           
         }
 
-        async executeMigrations() {
+        async fooooo(promiseArr)
+        {
+            const self = this;
+
+            const starterPromise = Promise.resolve(null);
+            const log = result => console.log(result);
+            
+            await promiseArr.reduce(
+                (p, spec) => p.then(() => self.runTask(spec).then(log)),
+                starterPromise
+            );
+            
+
+        }
+
+        executeMigrations() {
             const self = this;
             let migrationFunction = null;
             let migrFuncArgs = {};
@@ -363,7 +398,7 @@ module.exports =
 
             this.get_pending_res_migrs().then(res => {
                 let promiseArr = res.map(migrRow => {
-                    //  console.log(migrRow.fileName);
+                     //console.log(migrRow.fileName);
                     let fileContents = fs.readFileSync(
                         `./${this.migrations_path}/${migrRow.fileName}.yaml`,
                         "utf8"
@@ -377,24 +412,27 @@ module.exports =
                     };
 
                     if (data.create_table == 1) {
-                        migrationFunction = migration_helpers.createTableMigration;
+                       // migrationFunction = migration_helpers.createTableMigration;
+                       migrFuncArgs['type'] = 'create_table';
                     } else if (data.add_columns) {
-                        migrationFunction = migration_helpers.addColumnMigration;
+                        migrFuncArgs['type'] = 'add_columns';
+                       // migrationFunction = migration_helpers.addColumnMigration;
                     } else if (data.rename_columns === 1) {
-                        migrationFunction = migration_helpers.renameColumnMigration;
+                        migrFuncArgs['type'] = 'rename_columns';
+                      //  migrationFunction = migration_helpers.renameColumnMigration;
                     } else if (data.remove_columns === 1) {
-                        migrationFunction = migration_helpers.removeColumnMigration;
+                        migrFuncArgs['type'] = 'remove_columns';
+                       // migrationFunction = migration_helpers.removeColumnMigration;
                     }
 
-                    return migrationFunction;
+                    return migrFuncArgs ; //migrationFunction;
 
                 });
 
 
                 console.log('Promise all begin');
                 console.log(promiseArr.length);
-
-
+                self.fooooo(promiseArr);
 
                 //BlueBirdPromise.mapSeries(promiseArr, (prmsFnc, indx_prms) => {
                 //    console.log(indx_prms);
@@ -408,12 +446,7 @@ module.exports =
             });
 
 
-            const starterPromise = Promise.resolve(null);
-            const log = result => console.log(result);
-            await promiseArr.reduce(
-                (p, spec) => p.then(() => self.runTask(spec).then(log)),
-                starterPromise
-            );
+
 
         }
 

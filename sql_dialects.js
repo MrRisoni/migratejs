@@ -36,11 +36,11 @@
 
  function getPrimaryKey(dialect, pKey, data) {
   return (
-    this.getQuotes(dialect) +
+    getQuotes(dialect) +
     pKey +
-    this.getQuotes(dialect) +
+    getQuotes(dialect) +
     " " +
-    this.getAutoIncrement(dialect, data)
+    getAutoIncrement(dialect, data)
   );
 }
 
@@ -56,3 +56,6 @@
       return createdAtMySql(prfx);
   }
 }
+
+
+module.exports = {getQuotes,getPrimaryKey,createdAt, updatedAt};

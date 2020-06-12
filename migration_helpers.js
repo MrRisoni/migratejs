@@ -1,8 +1,15 @@
-const Sequelize = require('Sequelize');
+const Sequelize = require('sequelize');
 const dialects = require('./sql_dialects');
 
 
-function createTableMigration(data, dbType, connection, migrationName) {
+function createTableMigration(migrFuncArgs) {
+
+    const data = migrFuncArgs.data;
+    const conn = migrFuncArgs.conn;
+    const migrationName = migrFuncArgs.migrName;
+    const dbType = 'mysql'
+
+
     console.log('Running  ' + migrationName);
     const selbst = this;
     let prefix = data.prefix + "_";
@@ -213,3 +220,8 @@ function removeColumnMigration(migrFuncArgs) {
     console.log(changeSQL);
     return conn.query(changeSQL);
 }
+
+
+module.exports = {removeColumnMigration, createTableMigration,renameColumnMigration,addColumnMigration};
+
+
