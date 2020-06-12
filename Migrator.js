@@ -5,6 +5,8 @@ import path from "path";
 import Sequelize from "sequelize";
 import * as dialects from "./sql_dialects";
 import _ from "lodash";
+import * as migration_helpers from "./migration_helpers";
+
 
 export default class Migrator {
   constructor(ymlConfig) {
@@ -303,40 +305,6 @@ export default class Migrator {
   }
 
 
-   actionA()
-   {
-    return new Promise(resolve => {
-        resolve('A');
-    });
-   }
-
-
-   actionB()
-   {
-    return new Promise(resolve => {
-        resolve('B');
-    });
-   }
-
-
-
-   actionC()
-   {
-    return new Promise(resolve => {
-        resolve('C');
-    });
-   }
-
-
-
-   actionD()
-   {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve('D');
-      }, 12000);
-    });
-   }
 
 
 
@@ -513,7 +481,54 @@ export default class Migrator {
     });
   }
 
-  executeMigrations() {
+
+
+  executeMigrations()
+  {
+    const self = this;
+    let migrationFunction = null;
+
+    console.log('executeMigrations');
+    this.get_pending_res_migrs().then(res => {
+       let promiseArr = res.map(migrRow => {
+          console.log(migrRow.fileName);
+          let fileContents = fs.readFileSync(
+            `./${this.migrations_path}/${migrRow.fileName}.yaml`,
+            "utf8"
+          );
+          let data = yaml.safeLoad(fileContents);
+          if (data.create_table ==1) {
+            migrationFunction = self.actionA();
+          }else if (data.add_columns) {
+            migrationFunction = self.actionB();
+          }else if (data.rename_columns === 1) {
+            migrationFunction = self.actionC();
+          }else if (data.remove_columns === 1) {
+            migrationFunction = self.actionD();
+          }
+
+          return migrationFunction;
+       })
+    })
+  }
+
+
+
+  get_pending_res_migrs()
+  {
+    const self = this;
+
+    return self.MigrationModel.findAll({
+      where: {
+        processed: 0
+      },
+      order: [["id", "ASC"]]
+    });
+  }
+
+
+
+  executeMigrationsOLD() {
     const self = this;
     let migrationsPromiseArray = [];
 
@@ -525,7 +540,9 @@ export default class Migrator {
     }).then(results => {
       if (results.length > 0) {
         results.forEach(res => {
+          
           console.log("EXECUTING " + res.fileName);
+        
           let fileContents = fs.readFileSync(
             `./${this.migrations_path}/${res.fileName}.yaml`,
             "utf8"
@@ -630,16 +647,16 @@ export default class Migrator {
           } else if (data.create_table === 1) {
             //migrationFunction = self.createTableMigration(data);
             migrationFunction = self.actionA();
-          }
+          } 
 
-           migrationFunction.then(migrRes => {
-             console.log("FINISHED " + res.fileName);
+        /*   migrationFunction.then(migrRes => {
+         *    console.log("FINISHED " + res.fileName);
 
         
               })
+*/
 
-
-
+/*
           //  migrationFunction.then(migrRes => {
           //     console.log("FINISHED " + res.fileName);
 
@@ -647,7 +664,8 @@ export default class Migrator {
           //     })
 
           //  migrationsPromiseArray.push(migrationFunction);
-        });
+          */
+        }); 
       } else {
         console.log("Nothing to migrate");
       }
