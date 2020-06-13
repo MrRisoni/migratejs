@@ -2,57 +2,53 @@ const Sequelize = require("sequelize");
 const dialects = require("./sql_dialects");
 
 function createTableMigration(migrFuncArgs) {
-
   return new Promise((resolve, reject) => {
+    const data = migrFuncArgs.data;
+    const conn = migrFuncArgs.conn;
+    const migrationName = migrFuncArgs.migrName;
+    const dbType = "mysql";
 
+    console.log("Running  " + migrationName);
+    let prefix = data.prefix + "_";
+    let pKey = prefix + "id";
+    let pKeysList = [pKey];
+    let quote = dialects.getQuotes(dbType);
 
-  const data = migrFuncArgs.data;
-  const conn = migrFuncArgs.conn;
-  const migrationName = migrFuncArgs.migrName;
-  const dbType = "mysql";
+    let columnsSQL = [dialects.getPrimaryKey(dbType, pKey, data)];
 
-  console.log("Running  " + migrationName);
-  const selbst = this;
-  let prefix = data.prefix + "_";
-  let pKey = prefix + "id";
-  let pKeysList = [pKey];
-  let quote = dialects.getQuotes(dbType);
+    data.columns.forEach((item, i) => {
+      if (item.primary) {
+        pKeysList.push(prefix + item.title);
+      }
+      columnsSQL.push(makeColumnSQL(item, prefix, 0, quote));
+    });
 
-  let columnsSQL = [dialects.getPrimaryKey(dbType, pKey, data)];
-
-  data.columns.forEach((item, i) => {
-    if (item.primary) {
-      pKeysList.push(prefix + item.title);
+    if (data.created_at) {
+      columnsSQL.push(dialects.createdAt(dbType, prefix));
     }
-    columnsSQL.push(makeColumnSQL(item, prefix, 0, quote));
+    if (data.updated_at) {
+      columnsSQL.push(dialects.updatedAt(dbType, prefix));
+    }
+
+    columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
+
+    let createSQL =
+      " CREATE TABLE " + data.table_name + " ( " + columnsSQL.join(",") + ") ";
+
+    if (typeof data.engine !== "undefined") {
+      createSQL += " ENGINE =  " + data.engine;
+    }
+    if (typeof data.comment !== "undefined" && data.comment.length > 0) {
+      createSQL += " COMMENT '" + data.comment + "'";
+    }
+    console.log(createSQL);
+    // return conn.query(createSQL);
+    conn.query(createSQL).then(createTableRes => {
+      markAsDone(conn, migrationName).then(notifiedDBRes => {
+        resolve();
+      });
+    });
   });
-
-  if (data.created_at) {
-    columnsSQL.push(dialects.createdAt(dbType, prefix));
-  }
-  if (data.updated_at) {
-    columnsSQL.push(dialects.updatedAt(dbType, prefix));
-  }
-
-  columnsSQL.push(" PRIMARY KEY (" + pKeysList.join(",") + ")");
-
-  let createSQL =
-    " CREATE TABLE " + data.table_name + " ( " + columnsSQL.join(",") + ") ";
-
-  if (typeof data.engine !== "undefined") {
-    createSQL += " ENGINE =  " + data.engine;
-  }
-  if (typeof data.comment !== "undefined" && data.comment.length > 0) {
-    createSQL += " COMMENT '" + data.comment + "'";
-  }
-  console.log(createSQL);
- // return conn.query(createSQL);
- conn.query(createSQL).then(createTableRes => {
-    markAsDone(conn, migrationName).then(notifiedDBRes => {
-       resolve();
-    })
- });
-});
 }
 
 function makeColumnSQL(col, prefix, add = 0, quote = "`") {
@@ -133,9 +129,6 @@ function addColumnMigration(migrFuncArgs) {
   const migrName = migrFuncArgs.migrName;
   console.log("Running  " + migrName);
 
-  // this is buggy  !!!!!
-  const selbst = this;
-
   return new Promise((resolve, reject) => {
     const to_table = data.table_name;
     // get prefix
@@ -156,7 +149,9 @@ function addColumnMigration(migrFuncArgs) {
       let alterSQL = " ALTER TABLE " + to_table + "  " + columnsSQL.join(",");
       console.log(alterSQL);
       conn.query(alterSQL).then(ff => {
-        resolve();
+        markAsDone(conn, migrName).then(notifiedDBRes => {
+          resolve();
+        });
       });
     });
   });
@@ -200,7 +195,9 @@ function renameColumnMigration(migrFuncArgs) {
 
         console.log(changeSQL);
         conn.query(changeSQL).then(res => {
-          resolve();
+          markAsDone(conn, migrName).then(notifiedDBRes => {
+            resolve();
+          });
         });
       })
       .catch(err2 => {
@@ -217,28 +214,53 @@ function removeColumnMigration(migrFuncArgs) {
   const migrName = migrFuncArgs.migrName;
   console.log("Running  " + migrName);
 
-  const changeSQL =
-    "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
+  return new Promise((resolve, reject) => {
+    const changeSQL =
+      "ALTER TABLE " + data.table_name + " DROP COLUMN " + data.columns[0];
 
-  console.log(changeSQL);
-  return conn.query(changeSQL);
+    console.log(changeSQL);
+    conn.query(changeSQL).then(changeRes => {
+      markAsDone(conn, migrName).then(notifiedDBRes => {
+        resolve();
+      });
+    });
+  });
 }
 
+function dropTableMigration(data, res) {
+  console.log("Dropping table");
+
+  const data = migrFuncArgs.data;
+  const conn = migrFuncArgs.conn;
+  const migrationName = migrFuncArgs.migrName;
+  const dropSQL = "DROP  TABLE " + data.tables[0];
+
+  console.log(dropSQL);
+
+  return new Promise((resolve, reject) => {
+    conn.query(dropSQL).then(changeRes => {
+      markAsDone(conn, migrName).then(notifiedDBRes => {
+        resolve();
+      });
+    });
+  });
+}
 
 function markAsDone(connection, migrationFile) {
   console.log("Registering " + migrationFile + " as complete");
-  return connection
-      .query(
-          "UPDATE migrations SET processed = 1, updated_at = NOW() " +
-          " WHERE file_name = '" +
-          migrationFile +
-          "' ",  { type: Sequelize.QueryTypes.UPDATE }
-      )
+  return connection.query(
+    "UPDATE migrations SET processed = 1, updated_at = NOW() " +
+      " WHERE file_name = '" +
+      migrationFile +
+      "' ",
+    { type: Sequelize.QueryTypes.UPDATE }
+  );
 }
 
 module.exports = {
   removeColumnMigration,
   createTableMigration,
   renameColumnMigration,
-  addColumnMigration
+  addColumnMigration,
+  dropTableMigration
 };
