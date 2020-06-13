@@ -465,7 +465,10 @@ module.exports = class Migrator {
 
                 return migrFuncArgs; //migrationFunction;
             });
-            self.migrationReduce(promiseArr);
+            self.migrationReduce(promiseArr).then(migrationResult => {
+                console.log('migrationResult');
+              console.log(migrationResult);
+            });
         });
     }
 

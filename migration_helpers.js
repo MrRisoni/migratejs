@@ -2,6 +2,10 @@ const Sequelize = require("sequelize");
 const dialects = require("./sql_dialects");
 
 function createTableMigration(migrFuncArgs) {
+
+  return new Promise((resolve, reject) => {
+
+
   const data = migrFuncArgs.data;
   const conn = migrFuncArgs.conn;
   const migrationName = migrFuncArgs.migrName;
@@ -42,7 +46,13 @@ function createTableMigration(migrFuncArgs) {
     createSQL += " COMMENT '" + data.comment + "'";
   }
   console.log(createSQL);
-  return conn.query(createSQL);
+ // return conn.query(createSQL);
+ conn.query(createSQL).then(createTableRes => {
+    markAsDone(conn, migrationName).then(notifiedDBRes => {
+       resolve();
+    })
+ });
+});
 }
 
 function makeColumnSQL(col, prefix, add = 0, quote = "`") {
@@ -212,6 +222,18 @@ function removeColumnMigration(migrFuncArgs) {
 
   console.log(changeSQL);
   return conn.query(changeSQL);
+}
+
+
+function markAsDone(connection, migrationFile) {
+  console.log("Registering " + migrationFile + " as complete");
+  return connection
+      .query(
+          "UPDATE migrations SET processed = 1, updated_at = NOW() " +
+          " WHERE file_name = '" +
+          migrationFile +
+          "' ",  { type: Sequelize.QueryTypes.UPDATE }
+      )
 }
 
 module.exports = {
