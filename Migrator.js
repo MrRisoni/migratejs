@@ -6,6 +6,8 @@ const Sequelize = require("sequelize");
 const _ = require("lodash");
 const migration_helpers = require("./migration_helpers");
 const dialects = require("./sql_dialects");
+const { exit } = require("process");
+const { reject } = require("bluebird");
 
 module.exports = class Migrator {
   constructor(ymlConfig) {
@@ -142,48 +144,51 @@ module.exports = class Migrator {
   }
 
   newTable(args) {
+    console.log('--------------');
+    console.log(args);
     let model_name = args[0].replace("CreateTable_", "");
-
-    const stamp = this.getNewMigrationFileName(args[0]);
     const self = this;
 
-    const migrationName = "migration" + stamp + "_" + args[0];
+    const migrationName ="";
+    this.getNewMigrationFileName(args[0]).then(fileRes => {
 
-    let prfx = "";
-    let colstart = 1;
-    if (args[1].indexOf("--prefix") > -1) {
-      colstart = 2;
-      console.log(args[1]);
-      let tmp = args[1].split("=");
-      prfx = tmp[1];
-    }
+      let prfx = "";
+      let colstart = 1;
+      if (args[1].indexOf("--prefix") > -1) {
+        colstart = 2;
+        console.log(args[1]);
+        let tmp = args[1].split("=");
+        prfx = tmp[1];
+      }
+  
+      let yamlData = {
+        create_table: 1,
+        prefix: prfx,
+        name: migrationName,
+        table_name: model_name,
+        comment: "",
+        charset: "utf8",
+        engine: "InnoDB",
+        id: { type: "bigint", unsigned: true },
+        created_at: true,
+        updated_at: true,
+        columns: []
+      };
+  
+      for (let col = colstart; col < args.length; col++) {
+        let col_data = args[col].split(":");
+        let col_type = col_data[1].toUpperCase();
+        //  if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
+        // oops type not  supported
+        //   }
+        yamlData.columns.push({ title: col_data[0], type: col_type });
+      }
+     // console.log(yamlData);
+  
+      let yamlStr = yaml.safeDump(yamlData);
+      self.registerMigration(migrationName, yamlStr);
+    }).catch(err => {});
 
-    let yamlData = {
-      create_table: 1,
-      prefix: prfx,
-      name: migrationName,
-      table_name: model_name,
-      comment: "",
-      charset: "utf8",
-      engine: "InnoDB",
-      id: { type: "bigint", unsigned: true },
-      created_at: true,
-      updated_at: true,
-      columns: []
-    };
-
-    for (let col = colstart; col < args.length; col++) {
-      let col_data = args[col].split(":");
-      let col_type = col_data[1].toUpperCase();
-      //  if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
-      // oops type not  supported
-      //   }
-      yamlData.columns.push({ title: col_data[0], type: col_type });
-    }
-    console.log(yamlData);
-
-    let yamlStr = yaml.safeDump(yamlData);
-    this.registerMigration(migrationName, yamlStr);
   }
 
   newIndex(ref) {
@@ -440,9 +445,48 @@ module.exports = class Migrator {
     });
   }
 
+
+  checkIfPromiseExists(ref) {
+    const self = this;
+
+    return new Promise( (resolve,reject) => {
+      console.log(ref);
+      // check if it exists
+      console.log(ref);
+      const checkSQL =  " SELECT COUNT(id) AS similar FROM `migrations` WHERE file_name LIKE '%" + ref + "'";
+      console.log(checkSQL);
+      this.connection.query(checkSQL,  { type: Sequelize.QueryTypes.SELECT } ).then(checkExistRes => {
+       if (checkExistRes[0].similar >0) {
+         console.log(ref + ' already exists!');
+         reject(ref + ' already exists!');
+       }
+       else {
+        this.connection.query("SELECT COUNT(id) AS total FROM `migrations`",  { type: Sequelize.QueryTypes.SELECT } ).then(countRes => {
+            resolve(countRes[0].total);
+          });
+       }
+      });
+    });
+  }
+
   getNewMigrationFileName(ref) {
-    const stamp = moment().format("YYYYMMDD_hhmmss");
-    return "migration" + stamp + "_" + ref;
+    const self = this;
+
+    return new Promise( (resolve,reject) => {
+
+    self.checkIfPromiseExists(ref).then(existsRes => {
+      console.log('existsRes');
+      console.log(existsRes);
+      const stamp = moment().format("YYYYMMDD_hhmmss");
+      resolve("migration" + stamp + "_" + ref);
+    }).catch(err => {
+      console.log('errrX');
+      console.log(err);
+     // return "ERROR";
+     reject();
+    });
+  });
+  
   }
 
   registerMigration(migrationName, yamlStr) {

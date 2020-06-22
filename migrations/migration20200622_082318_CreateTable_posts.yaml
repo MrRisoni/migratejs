@@ -1,0 +1,15 @@
+create_table: 1
+prefix: pst
+name: migration20200622_082318_CreateTable_posts
+table_name: posts
+comment: ''
+charset: utf8
+engine: InnoDB
+id:
+  type: bigint
+  unsigned: true
+created_at: true
+updated_at: true
+columns:
+  - title: body
+    type: TEXT

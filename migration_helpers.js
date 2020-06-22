@@ -227,7 +227,7 @@ function removeColumnMigration(migrFuncArgs) {
   });
 }
 
-function dropTableMigration(data, res) {
+function dropTableMigration(migrFuncArgs) {
   console.log("Dropping table");
 
   const data = migrFuncArgs.data;
