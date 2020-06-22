@@ -46,9 +46,16 @@ module.exports = class Migrator {
                                               ADD PRIMARY KEY (`id`),  \
                                               ADD UNIQUE KEY `file_name` (`file_name`); ";
 
-    this.connection.query(createMigrationsTableSQL).then(res => {
-      this.connection.query(uniqueIdxSQL);
-    });
+//    this.connection.query(createMigrationsTableSQL).then(res => {
+//      this.connection.query(uniqueIdxSQL);
+ //   });
+const self = this;
+ this.connection
+ .query("DROP TABLE IF EXISTS posts,users,tickets;")
+ .then(dropRes => {
+   self.connection.query("TRUNCATE migrations ").then(dropRes => {
+   });
+  });
   }
 
   setUpDB(dbOption) {
@@ -582,7 +589,7 @@ module.exports = class Migrator {
       limit: 1,
       order: [["created_at", "DESC"]]
     }).then(foo => {
-      //console.log(foo[0].fileName);
+      console.log(foo[0].fileName);
       const rollingBackName = foo[0].fileName;
       const rollingBackId = foo[0].id;
 
@@ -900,32 +907,29 @@ module.exports = class Migrator {
 
     // clear up db;
     console.log(moment().format());
-    this.connection
-      .query("DROP TABLE IF EXISTS posts,users,tickets;")
-      .then(dropRes => {
-        self.connection.query("TRUNCATE migrations ").then(dropRes => {
-          Promise.all([
-            this.getMigrationFiles(),
-            this.getAllMigrationNamesFromDB()
-          ]).then(res => {
-            const cleanFiles = res[0].map(fil => {
-              return fil.name;
-            });
-            // oh javascript weird execution order forces promises
-            const diffs = _.difference(cleanFiles, res[1]);
-            let insertPromiseArr = [];
-            diffs.forEach(diff => {
-              console.log("Inserting diff " + diff);
-              insertPromiseArr.push(self.insertMigration(diff));
-            });
-
-            //  console.log("promise all exec");
-            Promise.all(insertPromiseArr).then(resIns => {
-              console.log("Trying to executing migrations");
-              self.executeMigrations();
-            });
-          });
-        });
+ 
+    Promise.all([
+      this.getMigrationFiles(),
+      this.getAllMigrationNamesFromDB()
+    ]).then(res => {
+      const cleanFiles = res[0].map(fil => {
+        return fil.name;
       });
+      // oh javascript weird execution order forces promises
+      const diffs = _.difference(cleanFiles, res[1]);
+      let insertPromiseArr = [];
+      diffs.forEach(diff => {
+        console.log("Inserting diff " + diff);
+        insertPromiseArr.push(self.insertMigration(diff));
+      });
+
+      //  console.log("promise all exec");
+      Promise.all(insertPromiseArr).then(resIns => {
+        console.log("Trying to executing migrations");
+        self.executeMigrations();
+      });
+    });
+
+    
   }
 };
