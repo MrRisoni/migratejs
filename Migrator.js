@@ -33,18 +33,18 @@ module.exports = class Migrator {
   init() {
     const createMigrationsTableSQL =
       "  CREATE TABLE `migrations` (   \
-                                        `id` bigint UNSIGNED NOT NULL,  \
-                                        `file_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL, \
-                                        `processed` tinyint UNSIGNED NOT NULL DEFAULT 0, \
-                                        `created_at` datetime DEFAULT CURRENT_TIMESTAMP, \
-                                        `updated_at` datetime DEFAULT CURRENT_TIMESTAMP \
-                                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8; ";
+                                              `id` bigint UNSIGNED NOT NULL,  \
+                                              `file_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL, \
+                                              `processed` tinyint UNSIGNED NOT NULL DEFAULT 0, \
+                                              `created_at` datetime DEFAULT CURRENT_TIMESTAMP, \
+                                              `updated_at` datetime DEFAULT CURRENT_TIMESTAMP \
+                                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8; ";
 
     const uniqueIdxSQL =
       "  ALTER TABLE `migrations`  \
-                                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \
-                                        ADD PRIMARY KEY (`id`),  \
-                                        ADD UNIQUE KEY `file_name` (`file_name`); ";
+                                              MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \
+                                              ADD PRIMARY KEY (`id`),  \
+                                              ADD UNIQUE KEY `file_name` (`file_name`); ";
 
     this.connection.query(createMigrationsTableSQL).then(res => {
       this.connection.query(uniqueIdxSQL);
@@ -130,84 +130,86 @@ module.exports = class Migrator {
   removeIndex(data) {
     console.log("finc removeIndex");
     console.log(data);
-    const migrName = this.getNewMigrationFileName(data[0]);
-    let to_table = data[0].replace("RemoveIndexFrom_", "");
+    const self = this;
+    this.getNewMigrationFileName(args[0]).then(migrName => {
+      let to_table = data[0].replace("RemoveIndexFrom_", "");
 
-    let yamlData = {
-      drop_index: 1,
-      name: migrName,
-      table_name: to_table,
-      index_name: data[1]
-    };
+      let yamlData = {
+        drop_index: 1,
+        name: migrName,
+        table_name: to_table,
+        index_name: data[1]
+      };
 
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+      self.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   newTable(args) {
-    console.log('--------------');
+    console.log("--------------");
     console.log(args);
     let model_name = args[0].replace("CreateTable_", "");
     const self = this;
 
-    this.getNewMigrationFileName(args[0]).then(fileRes => {
+    this.getNewMigrationFileName(args[0])
+      .then(fileRes => {
+        const migrationName = fileRes;
+        let prfx = "";
+        let colstart = 1;
+        if (args[1].indexOf("--prefix") > -1) {
+          colstart = 2;
+          console.log(args[1]);
+          let tmp = args[1].split("=");
+          prfx = tmp[1];
+        }
 
-      const migrationName = fileRes;
-      let prfx = "";
-      let colstart = 1;
-      if (args[1].indexOf("--prefix") > -1) {
-        colstart = 2;
-        console.log(args[1]);
-        let tmp = args[1].split("=");
-        prfx = tmp[1];
-      }
-  
-      let yamlData = {
-        create_table: 1,
-        prefix: prfx,
-        name: migrationName,
-        table_name: model_name,
-        comment: "",
-        charset: "utf8",
-        engine: "InnoDB",
-        id: { type: "bigint", unsigned: true },
-        created_at: true,
-        updated_at: true,
-        columns: []
-      };
-  
-      for (let col = colstart; col < args.length; col++) {
-        let col_data = args[col].split(":");
-        let col_type = col_data[1].toUpperCase();
-        //  if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
-        // oops type not  supported
-        //   }
-        yamlData.columns.push({ title: col_data[0], type: col_type });
-      }
-     // console.log(yamlData);
-  
-      let yamlStr = yaml.safeDump(yamlData);
-      self.registerMigration(migrationName, yamlStr);
-    }).catch(err => console.log(err));
+        let yamlData = {
+          create_table: 1,
+          prefix: prfx,
+          name: migrationName,
+          table_name: model_name,
+          comment: "",
+          charset: "utf8",
+          engine: "InnoDB",
+          id: { type: "bigint", unsigned: true },
+          created_at: true,
+          updated_at: true,
+          columns: []
+        };
 
+        for (let col = colstart; col < args.length; col++) {
+          let col_data = args[col].split(":");
+          let col_type = col_data[1].toUpperCase();
+          //  if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
+          // oops type not  supported
+          //   }
+          yamlData.columns.push({ title: col_data[0], type: col_type });
+        }
+        // console.log(yamlData);
+
+        let yamlStr = yaml.safeDump(yamlData);
+        self.registerMigration(migrationName, yamlStr);
+      })
+      .catch(err => console.log(err));
   }
 
   newIndex(ref) {
     // AddReferenceXTo
     const self = this;
-    const migrationName = this.getNewMigrationFileName(ref);
+    this.getNewMigrationFileName(ref).then(migrName => {
+      let to_table = ref.replace("AddIndexTo_", "");
+      //  console.log(to_table);
+      const yamlData = {
+        create_index: 1,
+        table: to_table,
+        name: "",
+        unique: false,
+        columns: [{ title: "ColA" }]
+      };
+      let yamlStr = yaml.safeDump(yamlData);
 
-    let to_table = ref.replace("AddIndexTo_", "");
-    //  console.log(to_table);
-    const yamlData = {
-      create_index: 1,
-      table: to_table,
-      name: "",
-      unique: false,
-      columns: [{ title: "ColA" }]
-    };
-    let yamlStr = yaml.safeDump(yamlData);
-
-    this.registerMigration(migrationName, yamlStr);
+      this.registerMigration(migrationName, yamlStr);
+    });
   }
 
   addIndexMigration(data, res) {
@@ -276,26 +278,27 @@ module.exports = class Migrator {
     const data = rest.split("References");
     const from_tbl = data[0];
     const to_tbl = data[1];
+    const self = this;
 
-    const migrName = this.getNewMigrationFileName(args);
+    this.getNewMigrationFileName(args).then(migrName => {
+      let yamlData = {
+        create_fkey: 1,
+        name: migrName,
+        table: from_tbl,
+        referenceTable: to_tbl,
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE"
+      };
 
-    let yamlData = {
-      create_fkey: 1,
-      name: migrName,
-      table: from_tbl,
-      referenceTable: to_tbl,
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE"
-    };
+      self.getPrefixOriginAndFkeyData(from_tbl, to_tbl).then(promiseRes => {
+        const fkeyData = promiseRes[1];
+        yamlData.fkey_column_name =
+          promiseRes[0] + to_tbl.toLocaleLowerCase() + "_id";
+        yamlData.fkey_type = fkeyData.type;
+        yamlData.referenceCol = fkeyData.name;
 
-    this.getPrefixOriginAndFkeyData(from_tbl, to_tbl).then(promiseRes => {
-      const fkeyData = promiseRes[1];
-      yamlData.fkey_column_name =
-        promiseRes[0] + to_tbl.toLocaleLowerCase() + "_id";
-      yamlData.fkey_type = fkeyData.type;
-      yamlData.referenceCol = fkeyData.name;
-
-      this.registerMigration(migrName, yaml.safeDump(yamlData));
+        self.registerMigration(migrName, yaml.safeDump(yamlData));
+      });
     });
   }
 
@@ -445,40 +448,48 @@ module.exports = class Migrator {
     });
   }
 
-
   checkIfPromiseExists(ref) {
     const self = this;
 
-    return new Promise( (resolve,reject) => {
-      const checkSQL =  " SELECT COUNT(id) AS similar FROM `migrations` WHERE file_name LIKE '%" + ref + "'";
-      this.connection.query(checkSQL,  { type: Sequelize.QueryTypes.SELECT } ).then(checkExistRes => {
-       if (checkExistRes[0].similar >0) {
-         console.log(ref + ' already exists!');
-         reject(ref + ' already exists!');
-       }
-       else {
-        this.connection.query("SELECT COUNT(id) AS total FROM `migrations`",  { type: Sequelize.QueryTypes.SELECT } ).then(countRes => {
-            resolve(countRes[0].total);
-          });
-       }
-      });
+    return new Promise((resolve, reject) => {
+      const checkSQL =
+        " SELECT COUNT(id) AS similar FROM `migrations` WHERE file_name LIKE '%" +
+        ref +
+        "'";
+      this.connection
+        .query(checkSQL, { type: Sequelize.QueryTypes.SELECT })
+        .then(checkExistRes => {
+          if (checkExistRes[0].similar > 0) {
+            console.log(ref + " already exists!");
+            reject(ref + " already exists!");
+          } else {
+            this.connection
+              .query("SELECT COUNT(id) AS total FROM `migrations`", {
+                type: Sequelize.QueryTypes.SELECT
+              })
+              .then(countRes => {
+                resolve(countRes[0].total);
+              });
+          }
+        });
     });
   }
 
   getNewMigrationFileName(ref) {
     const self = this;
 
-    return new Promise( (resolve,reject) => {
-
-    self.checkIfPromiseExists(ref).then(existsRes => {
-      const stamp = moment().format("YYYYMMDD_hhmmss");
-      resolve(existsRes + "_migration" + stamp + "_" + ref);
-    }).catch(err => {
-      console.log('err' + err);
-     reject();
+    return new Promise((resolve, reject) => {
+      self
+        .checkIfPromiseExists(ref)
+        .then(existsRes => {
+          const stamp = moment().format("YYYYMMDD_hhmmss");
+          resolve(existsRes + "_migration" + stamp + "_" + ref);
+        })
+        .catch(err => {
+          console.log("err" + err);
+          reject();
+        });
     });
-  });
-  
   }
 
   registerMigration(migrationName, yamlStr) {
@@ -756,106 +767,114 @@ module.exports = class Migrator {
   }
 
   dropTables(data) {
-    const migrName = this.getNewMigrationFileName("DropTables" + data[0]);
-    // console.log("DATA");
-    //console.log(data);
-    let yamlData = {
-      drop_table: 1,
-      name: migrName,
-      tables: data
-    };
+    const self = this;
 
-    console.log(yamlData);
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+    this.getNewMigrationFileName("DropTables" + data[0]).then(migrName => {
+      let yamlData = {
+        drop_table: 1,
+        name: migrName,
+        tables: data
+      };
+
+      console.log(yamlData);
+      this.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   removeColumn(data) {
-    const migrName = this.getNewMigrationFileName(data[0]);
-    // console.log("DATA");
-    // console.log(data);
-    let to_table = data[0].replace("RemoveColumnsFrom", "");
-    let cols = [];
-    const colstart = 1;
-    let yamlData = {
-      remove_columns: 1,
-      name: migrName,
-      table_name: to_table,
-      columns: []
-    };
+    const self = this;
 
-    for (let col = colstart; col < data.length; col++) {
-      yamlData.columns.push(data[col]);
-    }
+    this.getNewMigrationFileName(data[0]).then(migrName => {
+      let to_table = data[0].replace("RemoveColumnsFrom", "");
+      let cols = [];
+      const colstart = 1;
+      let yamlData = {
+        remove_columns: 1,
+        name: migrName,
+        table_name: to_table,
+        columns: []
+      };
 
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+      for (let col = colstart; col < data.length; col++) {
+        yamlData.columns.push(data[col]);
+      }
+
+      self.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   changeColumnType(data) {
     // console.log(data);
-    const migrName = this.getNewMigrationFileName(data[0]);
-    let to_table = data[0].replace("ChangeTypeIn_", "");
-    let yamlData = {
-      change_column_type: 1,
-      name: migrName,
-      table_name: to_table,
-      columns: []
-    };
+    const self = this;
 
-    for (let col = 1; col < data.length; col++) {
-      let col_data = data[col].split(":");
-      yamlData.columns.push({ title: col_data[0], to: col_data[1] });
-    }
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+    this.getNewMigrationFileName(data[0]).then(migrName => {
+      let to_table = data[0].replace("ChangeTypeIn_", "");
+      let yamlData = {
+        change_column_type: 1,
+        name: migrName,
+        table_name: to_table,
+        columns: []
+      };
+
+      for (let col = 1; col < data.length; col++) {
+        let col_data = data[col].split(":");
+        yamlData.columns.push({ title: col_data[0], to: col_data[1] });
+      }
+      self.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   renameColumn(data) {
-    const migrName = this.getNewMigrationFileName(data[0]);
-    //console.log("DATA");
-    // console.log(data);
-    let to_table = data[0].replace("RenameColumnIn", "");
-    let cols = [];
-    const colstart = 1;
-    let yamlData = {
-      rename_columns: 1,
-      name: migrName,
-      table_name: to_table,
-      columns: []
-    };
+    const self = this;
+    this.getNewMigrationFileName(data[0]).then(migrName => {
+      //console.log("DATA");
+      // console.log(data);
+      let to_table = data[0].replace("RenameColumnIn", "");
+      let cols = [];
+      const colstart = 1;
+      let yamlData = {
+        rename_columns: 1,
+        name: migrName,
+        table_name: to_table,
+        columns: []
+      };
 
-    for (let col = colstart; col < data.length; col++) {
-      let col_data = data[col].split(":");
+      for (let col = colstart; col < data.length; col++) {
+        let col_data = data[col].split(":");
 
-      yamlData.columns.push({ from: col_data[0], to: col_data[1] });
-    }
+        yamlData.columns.push({ from: col_data[0], to: col_data[1] });
+      }
 
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+      self.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   newColumns(data) {
-    const migrName = this.getNewMigrationFileName(data[0]);
-    // console.log("DATA");
-    // console.log(data);
-    let to_table = data[0].replace("AddColumnsTo_", "");
-    let cols = [];
-    const colstart = 1;
-    let yamlData = {
-      add_columns: 1,
-      name: migrName,
-      table_name: to_table,
-      columns: []
-    };
+    const self = this;
 
-    for (let col = colstart; col < data.length; col++) {
-      let col_data = data[col].split(":");
-      //  console.log(data[col]);
-      let col_type = col_data[1].toUpperCase();
-      if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
-        // oops type not  supported
+    this.getNewMigrationFileName(data).then(migrName => {
+      let to_table = data[0].replace("AddColumnsTo_", "");
+      let cols = [];
+      const colstart = 1;
+      let yamlData = {
+        add_columns: 1,
+        name: migrName,
+        table_name: to_table,
+        columns: []
+      };
+
+      for (let col = colstart; col < data.length; col++) {
+        let col_data = data[col].split(":");
+        //  console.log(data[col]);
+        let col_type = col_data[1].toUpperCase();
+        if (this.supportedColTypes.indexOf(col_data[1]) < 0) {
+          // oops type not  supported
+        }
+
+        yamlData.columns.push({ title: col_data[0], type: col_type });
       }
-
-      yamlData.columns.push({ title: col_data[0], type: col_type });
-    }
-    this.registerMigration(migrName, yaml.safeDump(yamlData));
+      self.registerMigration(migrName, yaml.safeDump(yamlData));
+    });
   }
 
   getUsefulArgs(argsArr, beginIdx) {
@@ -873,11 +892,11 @@ module.exports = class Migrator {
   migrateDB() {
     const self = this;
     /* say many devs are working on the same project
-                     one dev will pull all the migration files from db
-                     but his copy of db will not have the migrations
-                     this functions inserts migrations to db
-                     and tries to execute them
-                     */
+                         one dev will pull all the migration files from db
+                         but his copy of db will not have the migrations
+                         this functions inserts migrations to db
+                         and tries to execute them
+                         */
 
     // clear up db;
     console.log(moment().format());
@@ -896,7 +915,7 @@ module.exports = class Migrator {
             const diffs = _.difference(cleanFiles, res[1]);
             let insertPromiseArr = [];
             diffs.forEach(diff => {
-              // console.log("Inserting diff " + diff);
+              console.log("Inserting diff " + diff);
               insertPromiseArr.push(self.insertMigration(diff));
             });
 
