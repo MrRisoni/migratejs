@@ -755,24 +755,6 @@ const self = this;
     });
   }
 
-  undoRollback() {
-    //get the list of migration files
-    // get migration names from db
-    // diff will the migration that was rolled back
-    // insert diff to db
-    // migrate
-    const self = this;
-
-    Promise.all([
-      this.getMigrationFiles(),
-      this.getAllMigrationNamesFromDB()
-    ]).then(res => {
-      self.insertMigration(_.difference(res[0], res[1])[0]).then(foo => {
-        self.executeMigrations();
-      });
-    });
-  }
-
   dropTables(data) {
     const self = this;
 
