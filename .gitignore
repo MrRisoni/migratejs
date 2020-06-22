@@ -19,7 +19,7 @@ yarn-error.log*
 *.xml
 /bower_components
 *.mp3
-*.log
+ut.log
 *.env
 .env.yml
 *.swp

@@ -1,5 +1,7 @@
 const Sequelize = require("sequelize");
 const dialects = require("./sql_dialects");
+const fs = require("fs");
+const os = require("os");
 
 function createTableMigration(migrFuncArgs) {
   return new Promise((resolve, reject) => {
@@ -248,14 +250,37 @@ function dropTableMigration(migrFuncArgs) {
 
 function markAsDone(connection, migrationFile) {
   console.log("Registering " + migrationFile + " as complete");
-  return connection.query(
-    "UPDATE migrations SET processed = 1, updated_at = NOW() " +
-      " WHERE file_name = '" +
-      migrationFile +
-      "' ",
-    { type: Sequelize.QueryTypes.UPDATE }
-  );
+  const self = this;
+  return new Promise((resolve,reject) => {
+    connection.query(
+      "UPDATE migrations SET processed = 1, updated_at = NOW() " +
+        " WHERE file_name = '" +
+        migrationFile +
+        "' ",
+      { type: Sequelize.QueryTypes.UPDATE }
+    ).then(updRes => {
+        updateLogFile("XC " + migrationFile).then(recorded => {
+           resolve();
+        })
+    })
+  });
+  /*return  */
+
 }
+
+
+
+function updateLogFile(record) {
+  return new Promise((resolve,reject) => {
+  fs.appendFile('history.log', record + os.EOL, err => {
+    if (err) throw err;
+    console.log('Saved!');
+    resolve();
+  });
+});
+  
+}
+
 
 module.exports = {
   removeColumnMigration,
