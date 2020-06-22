@@ -149,9 +149,9 @@ module.exports = class Migrator {
     let model_name = args[0].replace("CreateTable_", "");
     const self = this;
 
-    const migrationName ="";
     this.getNewMigrationFileName(args[0]).then(fileRes => {
 
+      const migrationName = fileRes;
       let prfx = "";
       let colstart = 1;
       if (args[1].indexOf("--prefix") > -1) {
@@ -187,7 +187,7 @@ module.exports = class Migrator {
   
       let yamlStr = yaml.safeDump(yamlData);
       self.registerMigration(migrationName, yamlStr);
-    }).catch(err => {});
+    }).catch(err => console.log(err));
 
   }
 
@@ -450,11 +450,7 @@ module.exports = class Migrator {
     const self = this;
 
     return new Promise( (resolve,reject) => {
-      console.log(ref);
-      // check if it exists
-      console.log(ref);
       const checkSQL =  " SELECT COUNT(id) AS similar FROM `migrations` WHERE file_name LIKE '%" + ref + "'";
-      console.log(checkSQL);
       this.connection.query(checkSQL,  { type: Sequelize.QueryTypes.SELECT } ).then(checkExistRes => {
        if (checkExistRes[0].similar >0) {
          console.log(ref + ' already exists!');
@@ -475,14 +471,10 @@ module.exports = class Migrator {
     return new Promise( (resolve,reject) => {
 
     self.checkIfPromiseExists(ref).then(existsRes => {
-      console.log('existsRes');
-      console.log(existsRes);
       const stamp = moment().format("YYYYMMDD_hhmmss");
-      resolve("migration" + stamp + "_" + ref);
+      resolve(existsRes + "_migration" + stamp + "_" + ref);
     }).catch(err => {
-      console.log('errrX');
-      console.log(err);
-     // return "ERROR";
+      console.log('err' + err);
      reject();
     });
   });

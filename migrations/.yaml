@@ -1,6 +1,6 @@
 create_table: 1
 prefix: pst
-name: migration20200622_082318_CreateTable_posts
+name: ''
 table_name: posts
 comment: ''
 charset: utf8
